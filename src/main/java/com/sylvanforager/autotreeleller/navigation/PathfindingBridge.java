@@ -14,7 +14,8 @@ public class PathfindingBridge {
             String os = System.getProperty("os.name").toLowerCase();
             String ext = os.contains("win") ? "dll"
                 : os.contains("mac") ? "dylib" : "so";
-            String name = "atf_pathfinding." + ext;
+            String prefix = os.contains("win") ? "" : "lib";
+            String name = prefix + "atf_pathfinding." + ext;
             InputStream in = PathfindingBridge.class
                 .getResourceAsStream("/natives/" + name);
             Path tmp = Files.createTempFile("atf_pathfinding", "." + ext);

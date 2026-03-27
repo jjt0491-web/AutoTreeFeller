@@ -388,46 +388,48 @@ public class BreakSequencer {
                     return;
                 }
 
-                // Continuously find best target mid-air
-                BlockPos airTarget = BlockScanner.findOptimalTarget(
-                    client.player, queue, 5.5);
-                if (airTarget != null && !airTarget.equals(current)) {
-                    double switchDist = current != null
-                        ? Vec3d.ofCenter(airTarget)
-                            .distanceTo(Vec3d.ofCenter(current))
-                        : 999;
-                    if (switchDist > 1.5) {
-                        current = airTarget;
-                        lookHelper.startLookAt(client.player, current);
+                // Every few ticks, re-evaluate the best target mid-air
+                // (player position changes rapidly, so re-pick often)
+                if (jumpTicks % 2 == 0 || current == null) {
+                    BlockPos airTarget = BlockScanner.findOptimalTarget(
+                        client.player, queue, 5.5);
+                    if (airTarget != null) {
+                        if (!airTarget.equals(current)) {
+                            current = airTarget;
+                        }
                     }
                 }
 
-                boolean locked = lookHelper.tick(client.player);
-
-                if (current != null && locked) {
+                // Use trackTarget for smooth continuous aim (not slow eased lookAt)
+                if (current != null) {
                     BlockState apexBs = client.world.getBlockState(current);
                     if (apexBs.isAir()) {
+                        // Block broken mid-air — immediately retarget
                         consecutiveJumps = 0;
+                        queue.remove(current);
                         BlockPos next = BlockScanner.findOptimalTarget(
                             client.player, queue, 5.5);
                         if (next != null) {
                             current = next;
-                            lookHelper.startLookAt(client.player, next);
-                        }
-                    } else {
-                        double dist = client.player.getEyePos()
-                            .distanceTo(Vec3d.ofCenter(current));
-                        Vec3d eyes = client.player.getEyePos();
-                        Vec3d toBlock = Vec3d.ofCenter(current)
-                            .subtract(eyes).normalize();
-                        Vec3d lookVec = client.player.getRotationVec(1.0f);
-
-                        if (dist <= 5.5 && lookVec.dotProduct(toBlock) >= 0.80
-                                && isValidTarget(client, current)) {
-                            client.options.attackKey.setPressed(true);
-                            client.player.swingHand(Hand.MAIN_HAND);
+                        } else {
+                            current = null;
                         }
                     }
+                }
+
+                if (current != null) {
+                    boolean aimOk = lookHelper.trackTarget(client.player, current);
+                    double dist = client.player.getEyePos()
+                        .distanceTo(Vec3d.ofCenter(current));
+
+                    if (aimOk && dist <= 5.5 && isValidTarget(client, current)) {
+                        client.options.attackKey.setPressed(true);
+                        client.player.swingHand(Hand.MAIN_HAND);
+                    } else {
+                        client.options.attackKey.setPressed(false);
+                    }
+                } else {
+                    client.options.attackKey.setPressed(false);
                 }
 
                 // Land or timeout

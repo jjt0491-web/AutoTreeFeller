@@ -99,7 +99,12 @@ public class TreeNavigator {
                     walkable, nextTree, start);
                 if (goal == null) goal = nextTree.add(2, 0, 0);
 
-                path = PathfindingBridge.computePath(walkable, start, goal);
+                try {
+                    path = PathfindingBridge.computePath(walkable, start, goal);
+                } catch (Exception e) {
+                    AutoTreeFeller.LOGGER.error("[NAV] Pathfinding error: {}", e.getMessage());
+                    path = null;
+                }
 
                 if (path == null || path.isEmpty()) {
                     if (etherwarpFailed) {
