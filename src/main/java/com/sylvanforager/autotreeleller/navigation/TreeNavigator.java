@@ -1,6 +1,7 @@
 package com.sylvanforager.autotreeleller.navigation;
 
 import com.sylvanforager.autotreeleller.AutoTreeFeller;
+import com.sylvanforager.autotreeleller.render.OverlayRenderer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -75,12 +76,15 @@ public class TreeNavigator {
                     if (landing != null && etherWarp.canEtherwarp(client, landing)) {
                         etherWarpTarget = landing;
                         triedEtherwarp = true;
+                        OverlayRenderer.etherwarpSelected = landing;
+                        // Candidates were already stored by findEtherwarpLandingSpot
                         state = NavState.ETHERWARPING;
                         AutoTreeFeller.LOGGER.info(
                             "[NAV] Tree is {} blocks above, etherwarping to landing {}",
                             heightDiff, landing);
                         return;
                     }
+                    OverlayRenderer.etherwarpSelected = null;
                     AutoTreeFeller.LOGGER.info(
                         "[NAV] No etherwarp landing found (heightDiff={}), will walk", heightDiff);
                 }
@@ -143,6 +147,7 @@ public class TreeNavigator {
                             if (landing != null && etherWarp.canEtherwarp(client, landing)) {
                                 triedEtherwarp = true;
                                 etherWarpTarget = landing;
+                                OverlayRenderer.etherwarpSelected = landing;
                                 state = NavState.ETHERWARPING;
                                 AutoTreeFeller.LOGGER.info(
                                     "[NAV] Stuck at elevated tree, etherwarping to landing {}",
@@ -150,9 +155,10 @@ public class TreeNavigator {
                                 return;
                             }
                             // Landing spot not found — try direct etherwarp to tree
-                            if (!triedEtherwarp && etherWarp.canEtherwarp(client, nextTree)) {
+                            if (etherWarp.canEtherwarp(client, nextTree)) {
                                 triedEtherwarp = true;
                                 etherWarpTarget = nextTree;
+                                OverlayRenderer.etherwarpSelected = nextTree;
                                 state = NavState.ETHERWARPING;
                                 AutoTreeFeller.LOGGER.info(
                                     "[NAV] Stuck at elevated tree, etherwarping direct to tree");
@@ -167,6 +173,7 @@ public class TreeNavigator {
                         } else if (!triedEtherwarp && etherWarp.canEtherwarp(client, nextTree)) {
                             triedEtherwarp = true;
                             etherWarpTarget = nextTree;
+                            OverlayRenderer.etherwarpSelected = nextTree;
                             state = NavState.ETHERWARPING;
                             AutoTreeFeller.LOGGER.info("[NAV] Stuck, trying flat etherwarp");
                         } else {
@@ -199,6 +206,8 @@ public class TreeNavigator {
             case ETHERWARPING -> {
                 boolean done = etherWarp.tick(client, etherWarpTarget);
                 if (done) {
+                    OverlayRenderer.etherwarpSelected = null;
+                    OverlayRenderer.etherwarpCandidates = null;
                     double dist = xzDist(client, nextTree);
                     if (dist <= 5.0) {
                         AutoTreeFeller.LOGGER.info("[NAV] Etherwarped to tree");
@@ -248,6 +257,9 @@ public class TreeNavigator {
                 walkTicks = 0;
                 lastPos = start;
                 state = NavState.WALKING_PATH;
+                // Show path in overlay
+                OverlayRenderer.walkPath = path;
+                OverlayRenderer.walkPathIndex = 0;
                 AutoTreeFeller.LOGGER.info("[NAV] Path found, {} steps", path.size());
             }
 
@@ -285,6 +297,7 @@ public class TreeNavigator {
                 if (wpDist < 0.6 && Math.abs(waypoint.getY()
                     - client.player.getBlockY()) <= 1) {
                     pathIndex++;
+                    OverlayRenderer.walkPathIndex = pathIndex;
                     stuckTicks = 0;
                     return;
                 }
@@ -320,6 +333,9 @@ public class TreeNavigator {
 
             case ARRIVED, IDLE -> {
                 releaseKeys(client);
+                OverlayRenderer.walkPath = null;
+                OverlayRenderer.etherwarpSelected = null;
+                OverlayRenderer.etherwarpCandidates = null;
             }
         }
     }

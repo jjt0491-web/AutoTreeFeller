@@ -3,6 +3,7 @@ package com.sylvanforager.autotreeleller.sequencer;
 import com.sylvanforager.autotreeleller.AutoTreeFeller;
 import com.sylvanforager.autotreeleller.look.PlayerLookHelper;
 import com.sylvanforager.autotreeleller.navigation.TreeNavigator;
+import com.sylvanforager.autotreeleller.render.OverlayRenderer;
 import com.sylvanforager.autotreeleller.scanner.BlockScanner;
 import com.sylvanforager.autotreeleller.util.HumanTimer;
 import net.minecraft.block.BlockState;
@@ -72,6 +73,7 @@ public class BreakSequencer {
             queue.clear();
             lookHelper.reset();
             navigator.reset(client);
+            OverlayRenderer.clear();
             AutoTreeFeller.LOGGER.info("[ATF] Disabled");
             return;
         }

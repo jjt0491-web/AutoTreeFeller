@@ -1,5 +1,6 @@
 package com.sylvanforager.autotreeleller.navigation;
 
+import com.sylvanforager.autotreeleller.render.OverlayRenderer;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -125,6 +126,9 @@ public class TreeClusterFinder {
 
         com.sylvanforager.autotreeleller.AutoTreeFeller.LOGGER.info(
             "[ETHERWARP] Found {} candidate landing spots", candidates.size());
+
+        // Expose candidates to overlay renderer (cyan highlights)
+        OverlayRenderer.etherwarpCandidates = new java.util.ArrayList<>(candidates);
 
         if (candidates.isEmpty()) return null;
 
