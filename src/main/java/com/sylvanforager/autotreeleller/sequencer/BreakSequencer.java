@@ -36,11 +36,9 @@ public class BreakSequencer {
     private int walkStuckTicks = 0;
     private BlockPos lastWalkPos = null;
 
-    // ── Jump-loop & scan-failure escape ───────────────────────────────────
+    // ── Escape counters ──────────────────────────────────────────────────
     private int consecutiveJumps = 0;
-    private int scanFailures = 0;
-    private static final int MAX_CONSECUTIVE_JUMPS = 4;
-    private static final int MAX_SCAN_FAILURES = 6;
+    private static final int MAX_CONSECUTIVE_JUMPS = 2; // jump max twice, then walk/navigate
 
     private static final int MAX_HOLD_TICKS = 40;
     private static final double REACH = 4.5;
@@ -48,7 +46,7 @@ public class BreakSequencer {
     private final PlayerLookHelper lookHelper = new PlayerLookHelper();
     private final HumanTimer settleTimer = new HumanTimer(1, 2);
     private final HumanTimer apexTimer = new HumanTimer(8, 13);
-    private final HumanTimer throwSettleTimer = new HumanTimer(12, 18);
+    private final HumanTimer throwSettleTimer = new HumanTimer(10, 15);
     private final TreeNavigator navigator = new TreeNavigator();
 
     // ── toggle ────────────────────────────────────────────────────────────
@@ -64,7 +62,6 @@ public class BreakSequencer {
             jumpCooldown = 0;
             jumpAttempts = 0;
             consecutiveJumps = 0;
-            scanFailures = 0;
             lastJumpTarget = null;
             breakHoldTicks = 0;
             queue.clear();
@@ -85,7 +82,6 @@ public class BreakSequencer {
 
         firstTarget = true;
         consecutiveJumps = 0;
-        scanFailures = 0;
         state = State.SCANNING;
         AutoTreeFeller.LOGGER.info("[ATF] Enabled");
     }
@@ -98,23 +94,19 @@ public class BreakSequencer {
         if (client.player == null || client.world == null) return;
         if (jumpCooldown > 0) jumpCooldown--;
 
-        // global sweep purge every tick
+        // Purge broken blocks from queue every tick
         if (state != State.IDLE && state != State.SCANNING) {
             queue.removeIf(pos -> client.world.getBlockState(pos).isAir());
         }
 
-        // stop if no tree nearby — transition to navigation
-        if (state != State.IDLE && state != State.WALKING
-                && state != State.THROWING && state != State.SCANNING
-                && state != State.NAVIGATING) {
+        // If no tree blocks nearby at all → navigate to next tree
+        if (state != State.IDLE && state != State.NAVIGATING
+                && state != State.SCANNING) {
             if (!BlockScanner.hasAnyNearby(client.player, 20.0)) {
                 releaseAll(client);
                 queue.clear();
                 BlockScanner.resetNearbyCache();
-                navigator.reset(client);
-                navigator.start();
-                state = State.NAVIGATING;
-                AutoTreeFeller.LOGGER.info("[ATF] No blocks nearby, navigating to next tree");
+                goNavigate(client, "No blocks nearby");
                 return;
             }
         }
@@ -127,14 +119,8 @@ public class BreakSequencer {
                 queue.removeIf(pos -> client.world.getBlockState(pos).isAir());
 
                 if (queue.isEmpty()) {
-                    // Tree done — navigate to next tree
                     BlockScanner.resetNearbyCache();
-                    navigator.reset(client);
-                    navigator.start();
-                    state = State.NAVIGATING;
-                    consecutiveJumps = 0;
-                    scanFailures = 0;
-                    AutoTreeFeller.LOGGER.info("[ATF] Tree complete, navigating to next");
+                    goNavigate(client, "Tree complete");
                     return;
                 }
 
@@ -142,44 +128,50 @@ public class BreakSequencer {
                     ? BlockScanner.findLowest(client.player, queue)
                     : BlockScanner.findOptimalTarget(client.player, queue, REACH);
 
-                if (next == null) {
-                    scanFailures++;
-
-                    // Escape: too many failed jumps/scans → throw or navigate
-                    if (consecutiveJumps >= MAX_CONSECUTIVE_JUMPS
-                            || scanFailures >= MAX_SCAN_FAILURES) {
-                        BlockPos throwTarget = BlockScanner.findOptimalTarget(
-                            client.player, queue, 20.0);
-                        if (throwTarget != null) {
-                            current = throwTarget;
-                            lookHelper.startLookAt(client.player, current);
-                            state = State.THROWING;
-                            AutoTreeFeller.LOGGER.info(
-                                "[ATF] Can't reach blocks after {} jumps, throwing",
-                                consecutiveJumps);
-                        } else {
-                            BlockScanner.resetNearbyCache();
-                            navigator.reset(client);
-                            navigator.start();
-                            state = State.NAVIGATING;
-                            AutoTreeFeller.LOGGER.info(
-                                "[ATF] Unreachable blocks, navigating to next tree");
-                        }
-                        consecutiveJumps = 0;
-                        scanFailures = 0;
-                        return;
-                    }
-
-                    state = State.JUMPING;
+                if (next != null) {
+                    // Found a reachable target — go break it
+                    firstTarget = false;
+                    consecutiveJumps = 0;
+                    current = next;
+                    lookHelper.startLookAt(client.player, current);
+                    state = State.TURNING;
                     return;
                 }
 
-                // Found a reachable target
-                firstTarget = false;
-                scanFailures = 0;
-                current = next;
-                lookHelper.startLookAt(client.player, current);
-                state = State.TURNING;
+                // ── Blocks exist but none in reach — decide action ────────
+                // Priority: walk > jump (only if blocks above) > navigate
+
+                // 1. Try walking toward nearest block
+                BlockPos nearest = BlockScanner.findNearest(client.player, 20.0);
+                if (nearest != null) {
+                    double xzDist = Math.sqrt(
+                        Math.pow(nearest.getX() - client.player.getX(), 2) +
+                        Math.pow(nearest.getZ() - client.player.getZ(), 2));
+
+                    if (xzDist > 1.5) {
+                        // Blocks are horizontally distant — walk toward them
+                        state = State.WALKING;
+                        return;
+                    }
+
+                    // 2. Blocks are close horizontally but above — jump
+                    if (nearest.getY() > client.player.getBlockPos().getY() + 1
+                            && consecutiveJumps < MAX_CONSECUTIVE_JUMPS
+                            && client.player.isOnGround() && jumpCooldown == 0) {
+                        BlockPos jumpTarget = BlockScanner.findOptimalTarget(
+                            client.player, queue, 6.0);
+                        if (jumpTarget != null) {
+                            current = jumpTarget;
+                            lookHelper.startLookAt(client.player, current);
+                        }
+                        state = State.JUMPING;
+                        return;
+                    }
+                }
+
+                // 3. Exhausted walk/jump options — navigate to next tree
+                BlockScanner.resetNearbyCache();
+                goNavigate(client, "Blocks unreachable, moving on");
             }
 
             // ── TURNING ──────────────────────────────────────────────────
@@ -208,11 +200,9 @@ public class BreakSequencer {
                 // ── Block broken — seamless transition to next ────────────
                 if (bs.isAir()) {
                     consecutiveJumps = 0;
-                    scanFailures = 0;
                     queue.remove(current);
-
-                    // Immediately find the next reachable block
                     queue.removeIf(pos -> client.world.getBlockState(pos).isAir());
+
                     BlockPos next = BlockScanner.findOptimalTarget(
                         client.player, queue, REACH);
 
@@ -221,23 +211,17 @@ public class BreakSequencer {
                         current = next;
                         lookHelper.startLookAt(client.player, current);
                         breakHoldTicks = 0;
-                        // Stay in BREAKING — no pause between blocks
+                        // Stay in BREAKING
                     } else {
-                        // Nothing in reach right now
                         client.options.attackKey.setPressed(false);
                         breakHoldTicks = 0;
 
                         if (queue.isEmpty()) {
                             BlockScanner.resetNearbyCache();
-                            navigator.reset(client);
-                            navigator.start();
-                            state = State.NAVIGATING;
-                            AutoTreeFeller.LOGGER.info(
-                                "[ATF] Tree complete, navigating to next");
+                            goNavigate(client, "Tree complete");
                         } else {
-                            // Blocks exist but out of reach — quick settle then re-scan
-                            settleTimer.reset();
-                            state = State.SETTLING;
+                            // Blocks remain but out of reach — re-scan to decide
+                            state = State.SCANNING;
                         }
                     }
                     return;
@@ -251,7 +235,6 @@ public class BreakSequencer {
                     client.options.attackKey.setPressed(false);
                     breakHoldTicks = 0;
 
-                    // Try to find something in reach
                     BlockPos reachable = BlockScanner.findOptimalTarget(
                         client.player, queue, REACH);
                     if (reachable != null) {
@@ -261,30 +244,8 @@ public class BreakSequencer {
                         return;
                     }
 
-                    // Try walking closer
-                    BlockPos nearby = BlockScanner.findNearest(client.player, 9.0);
-                    if (nearby != null) {
-                        double xzDist = Math.sqrt(
-                            Math.pow(nearby.getX() - client.player.getX(), 2) +
-                            Math.pow(nearby.getZ() - client.player.getZ(), 2));
-                        if (xzDist > 1.0) {
-                            state = State.WALKING;
-                            return;
-                        }
-                    }
-
-                    // Jump if on ground
-                    if (client.player.isOnGround() && jumpCooldown == 0) {
-                        BlockPos jumpTarget = BlockScanner.findOptimalTarget(
-                            client.player, queue, 6.0);
-                        if (jumpTarget != null) {
-                            current = jumpTarget;
-                            lookHelper.startLookAt(client.player, current);
-                        }
-                        state = State.JUMPING;
-                    } else if (!client.player.isOnGround()) {
-                        state = State.WAITING_FOR_APEX;
-                    }
+                    // Not in reach — go back to SCANNING which will decide walk/jump/navigate
+                    state = State.SCANNING;
                     return;
                 }
 
@@ -292,19 +253,16 @@ public class BreakSequencer {
                 boolean aimOk = lookHelper.trackTarget(client.player, current);
 
                 if (!aimOk) {
-                    // Check if aim drifted way off (e.g. player got pushed)
                     Vec3d eyes = client.player.getEyePos();
                     Vec3d toBlock = Vec3d.ofCenter(current).subtract(eyes).normalize();
                     Vec3d lookVec = client.player.getRotationVec(1.0f);
                     if (lookVec.dotProduct(toBlock) < 0.55) {
-                        // Way off — full re-aim
                         client.options.attackKey.setPressed(false);
                         breakHoldTicks = 0;
                         lookHelper.startLookAt(client.player, current);
                         state = State.TURNING;
                         return;
                     }
-                    // Moderately off — trackTarget will converge, keep attacking
                 }
 
                 // Safety cutoff
@@ -312,8 +270,7 @@ public class BreakSequencer {
                     client.options.attackKey.setPressed(false);
                     breakHoldTicks = 0;
                     queue.poll();
-                    settleTimer.reset();
-                    state = State.SETTLING;
+                    state = State.SCANNING;
                     return;
                 }
 
@@ -324,7 +281,6 @@ public class BreakSequencer {
                     return;
                 }
 
-                // Continuous attack — no random stutter delays
                 client.options.attackKey.setPressed(true);
                 client.player.swingHand(Hand.MAIN_HAND);
                 breakHoldTicks++;
@@ -344,10 +300,9 @@ public class BreakSequencer {
             case JUMPING -> {
                 consecutiveJumps++;
 
-                // Stall detector — same block repeatedly
                 if (current != null && current.equals(lastJumpTarget)) {
                     jumpAttempts++;
-                    if (jumpAttempts >= 3) {
+                    if (jumpAttempts >= 2) {
                         jumpAttempts = 0;
                         lastJumpTarget = null;
                         queue.removeIf(pos -> pos.equals(current));
@@ -382,38 +337,27 @@ public class BreakSequencer {
                 if (queue.isEmpty()) {
                     client.options.attackKey.setPressed(false);
                     BlockScanner.resetNearbyCache();
-                    navigator.reset(client);
-                    navigator.start();
-                    state = State.NAVIGATING;
+                    goNavigate(client, "Tree complete mid-air");
                     return;
                 }
 
-                // Every few ticks, re-evaluate the best target mid-air
-                // (player position changes rapidly, so re-pick often)
+                // Re-evaluate target every 2 ticks
                 if (jumpTicks % 2 == 0 || current == null) {
                     BlockPos airTarget = BlockScanner.findOptimalTarget(
                         client.player, queue, 5.5);
-                    if (airTarget != null) {
-                        if (!airTarget.equals(current)) {
-                            current = airTarget;
-                        }
+                    if (airTarget != null && !airTarget.equals(current)) {
+                        current = airTarget;
                     }
                 }
 
-                // Use trackTarget for smooth continuous aim (not slow eased lookAt)
                 if (current != null) {
                     BlockState apexBs = client.world.getBlockState(current);
                     if (apexBs.isAir()) {
-                        // Block broken mid-air — immediately retarget
                         consecutiveJumps = 0;
                         queue.remove(current);
                         BlockPos next = BlockScanner.findOptimalTarget(
                             client.player, queue, 5.5);
-                        if (next != null) {
-                            current = next;
-                        } else {
-                            current = null;
-                        }
+                        current = next; // may be null
                     }
                 }
 
@@ -437,8 +381,7 @@ public class BreakSequencer {
                         || jumpTicks >= 22) {
                     client.options.attackKey.setPressed(false);
                     jumpTicks = 0;
-                    settleTimer.reset();
-                    state = State.SETTLING;
+                    state = State.SCANNING; // re-scan, don't settle
                 }
             }
 
@@ -446,23 +389,17 @@ public class BreakSequencer {
             case WALKING -> {
                 queue.removeIf(pos -> client.world.getBlockState(pos).isAir());
                 if (queue.isEmpty()) {
-                    client.options.forwardKey.setPressed(false);
-                    client.options.sprintKey.setPressed(false);
+                    releaseAll(client);
                     BlockScanner.resetNearbyCache();
-                    navigator.reset(client);
-                    navigator.start();
-                    state = State.NAVIGATING;
+                    goNavigate(client, "Tree complete while walking");
                     return;
                 }
 
                 BlockPos target = BlockScanner.findNearest(client.player, 20.0);
                 if (target == null) {
-                    client.options.forwardKey.setPressed(false);
-                    client.options.sprintKey.setPressed(false);
+                    releaseAll(client);
                     BlockScanner.resetNearbyCache();
-                    navigator.reset(client);
-                    navigator.start();
-                    state = State.NAVIGATING;
+                    goNavigate(client, "Lost target while walking");
                     return;
                 }
 
@@ -470,31 +407,21 @@ public class BreakSequencer {
                 double dz = (target.getZ() + 0.5) - client.player.getZ();
                 double xzDist = Math.sqrt(dx * dx + dz * dz);
 
+                // Close enough — try to break
                 if (xzDist < 2.5) {
                     client.options.forwardKey.setPressed(false);
                     client.options.sprintKey.setPressed(false);
-
-                    BlockPos reachable = BlockScanner.findOptimalTarget(
-                        client.player, queue, REACH);
-                    if (reachable != null) {
-                        state = State.SCANNING;
-                    } else {
-                        current = BlockScanner.findOptimalTarget(
-                            client.player, queue, 20.0);
-                        if (current != null) {
-                            lookHelper.startLookAt(client.player, current);
-                        }
-                        state = State.THROWING;
-                    }
+                    state = State.SCANNING;
                     return;
                 }
 
+                // Face target and walk
                 float targetYaw = (float)(Math.toDegrees(Math.atan2(-dx, dz)));
                 float currentYaw = client.player.getYaw();
                 float yawDelta = targetYaw - currentYaw;
                 while (yawDelta > 180) yawDelta -= 360;
                 while (yawDelta < -180) yawDelta += 360;
-                client.player.setYaw(currentYaw + yawDelta * 0.3f);
+                client.player.setYaw(currentYaw + yawDelta * 0.35f);
 
                 client.options.forwardKey.setPressed(true);
                 client.options.sprintKey.setPressed(true);
@@ -503,13 +430,12 @@ public class BreakSequencer {
                 BlockPos walkPos = client.player.getBlockPos();
                 if (walkPos.equals(lastWalkPos)) {
                     walkStuckTicks++;
-                    if (walkStuckTicks > 15) {
+                    if (walkStuckTicks > 12) {
                         client.options.jumpKey.setPressed(true);
                     }
-                    if (walkStuckTicks > 40) {
-                        client.options.forwardKey.setPressed(false);
-                        client.options.sprintKey.setPressed(false);
-                        client.options.jumpKey.setPressed(false);
+                    if (walkStuckTicks > 35) {
+                        // Can't walk there — go back to scanning
+                        releaseAll(client);
                         walkStuckTicks = 0;
                         state = State.SCANNING;
                     }
@@ -533,7 +459,6 @@ public class BreakSequencer {
                     AutoTreeFeller.LOGGER.info("[ATF] Threw axe at {}", current);
                     justThrew = true;
                     throwSettleTimer.reset();
-                    settleTimer.reset();
                     state = State.SETTLING;
                     return;
                 }
@@ -541,9 +466,7 @@ public class BreakSequencer {
                 queue.removeIf(pos -> client.world.getBlockState(pos).isAir());
                 if (queue.isEmpty()) {
                     BlockScanner.resetNearbyCache();
-                    navigator.reset(client);
-                    navigator.start();
-                    state = State.NAVIGATING;
+                    goNavigate(client, "Tree complete");
                     return;
                 }
 
@@ -551,9 +474,7 @@ public class BreakSequencer {
                     client.player, queue, 20.0);
                 if (throwTarget == null) {
                     BlockScanner.resetNearbyCache();
-                    navigator.reset(client);
-                    navigator.start();
-                    state = State.NAVIGATING;
+                    goNavigate(client, "No throw target");
                     return;
                 }
 
@@ -575,6 +496,7 @@ public class BreakSequencer {
                 throwHoldTicks = 1;
             }
 
+            // ── NAVIGATING ───────────────────────────────────────────────
             case NAVIGATING -> {
                 navigator.tick(client);
                 if (navigator.hasArrived()) {
@@ -582,7 +504,6 @@ public class BreakSequencer {
                     firstTarget = true;
                     current = null;
                     consecutiveJumps = 0;
-                    scanFailures = 0;
                     state = State.SCANNING;
                     AutoTreeFeller.LOGGER.info(
                         "[ATF] Arrived at next tree, starting break");
@@ -599,6 +520,17 @@ public class BreakSequencer {
     }
 
     // ── helpers ───────────────────────────────────────────────────────────
+
+    /** Central method to transition to NAVIGATING — resets state cleanly. */
+    private void goNavigate(MinecraftClient client, String reason) {
+        releaseAll(client);
+        navigator.reset(client);
+        navigator.start();
+        state = State.NAVIGATING;
+        consecutiveJumps = 0;
+        AutoTreeFeller.LOGGER.info("[ATF] {} — navigating to next tree", reason);
+    }
+
     private boolean isValidTarget(MinecraftClient client, BlockPos pos) {
         if (pos == null || client.world == null) return false;
         return client.world.getBlockState(pos).getBlock()

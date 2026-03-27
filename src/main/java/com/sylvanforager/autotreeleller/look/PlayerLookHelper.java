@@ -12,7 +12,7 @@ public class PlayerLookHelper {
     private float duration;
     private float overshootYaw, overshootPitch;
     private float microJitterX, microJitterY;
-    private static final float BASE_DURATION = 3.5f;
+    private static final float BASE_DURATION = 2.5f;
 
     public void startLookAt(PlayerEntity player, BlockPos pos) {
         double targetX = pos.getX() + 0.5;
@@ -38,33 +38,31 @@ public class PlayerLookHelper {
         float pitchDelta = this.targetPitch - this.startPitch;
         float totalDelta = Math.abs(yawDelta) + Math.abs(pitchDelta);
 
-        // Only snap for truly imperceptible adjustments (<4°)
-        if (totalDelta < 4.0f) {
+        if (totalDelta < 5.0f) {
             player.setYaw(this.targetYaw);
             player.setPitch(this.targetPitch);
             this.progress = 1.0f;
             return;
         }
 
-        // Scale start progress and duration by angle size for smoothness
-        if (totalDelta < 10.0f) {
-            this.progress = 0.5f;
-            this.duration = 2.0f + (float)(Math.random() * 0.5);
-        } else if (totalDelta < 25.0f) {
+        if (totalDelta < 12.0f) {
+            this.progress = 0.55f;
+            this.duration = 1.5f + (float)(Math.random() * 0.5);
+        } else if (totalDelta < 30.0f) {
             this.progress = 0.3f;
-            this.duration = 3.0f + (float)(Math.random() * 1.0);
+            this.duration = 2.0f + (float)(Math.random() * 0.8);
         } else {
             this.progress = 0.0f;
             this.duration = BASE_DURATION
-                + (float)(Math.random() * 1.5)
-                + (totalDelta / 100.0f);
+                + (float)(Math.random() * 1.0)
+                + (totalDelta / 120.0f);
         }
 
-        float overshootFactor = (float)(0.03 + Math.random() * 0.07);
+        float overshootFactor = (float)(0.02 + Math.random() * 0.05);
         this.overshootYaw = yawDelta * overshootFactor;
         this.overshootPitch = pitchDelta * overshootFactor;
-        this.microJitterX = (float)(Math.random() * 0.2 - 0.1);
-        this.microJitterY = (float)(Math.random() * 0.1 - 0.05);
+        this.microJitterX = (float)(Math.random() * 0.15 - 0.075);
+        this.microJitterY = (float)(Math.random() * 0.08 - 0.04);
     }
 
     public boolean tick(PlayerEntity player) {
@@ -85,9 +83,9 @@ public class PlayerLookHelper {
         }
 
         microJitterX = microJitterX * 0.7f
-            + (float)(Math.random() * 0.2 - 0.1) * 0.3f;
+            + (float)(Math.random() * 0.15 - 0.075) * 0.3f;
         microJitterY = microJitterY * 0.7f
-            + (float)(Math.random() * 0.1 - 0.05) * 0.3f;
+            + (float)(Math.random() * 0.08 - 0.04) * 0.3f;
         newYaw += microJitterX;
         newPitch += microJitterY;
 
@@ -102,8 +100,8 @@ public class PlayerLookHelper {
 
     /**
      * Continuous micro-correction for aim tracking while breaking.
-     * Smoothly nudges aim toward the target each tick without starting
-     * a full look-at sequence. Returns true if aim is close enough to hit.
+     * Smoothly nudges aim toward the target each tick.
+     * Returns true if aim is close enough to hit.
      */
     public boolean trackTarget(PlayerEntity player, BlockPos pos) {
         Vec3d eyes = player.getEyePos();
@@ -121,10 +119,9 @@ public class PlayerLookHelper {
         while (yawDiff < -180) yawDiff += 360;
         float pitchDiff = wantPitch - player.getPitch();
 
-        // Humanized correction speed with slight variance per tick
-        float speed = 0.28f + (float)(Math.random() * 0.08);
-        float jX = (float)(Math.random() * 0.12 - 0.06);
-        float jY = (float)(Math.random() * 0.06 - 0.03);
+        float speed = 0.35f + (float)(Math.random() * 0.10);
+        float jX = (float)(Math.random() * 0.10 - 0.05);
+        float jY = (float)(Math.random() * 0.05 - 0.025);
 
         player.setYaw(player.getYaw() + yawDiff * speed + jX);
         player.setPitch(player.getPitch() + pitchDiff * speed + jY);
@@ -134,7 +131,6 @@ public class PlayerLookHelper {
             client.player.headYaw = player.getYaw();
         }
 
-        // Return true if aim is acceptably close
         Vec3d toBlock = Vec3d.ofCenter(pos).subtract(eyes).normalize();
         Vec3d lookVec = player.getRotationVec(1.0f);
         return lookVec.dotProduct(toBlock) >= 0.80;
