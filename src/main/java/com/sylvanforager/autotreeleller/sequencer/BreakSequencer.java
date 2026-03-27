@@ -250,9 +250,8 @@ public class BreakSequencer {
  // ── SETTLING ─────────────────────────────────────────────────
  case SETTLING -> {
  releaseAll(client);
- int target = justThrew ? throwSettleTimer.tick() ? 1 : 0
- : (settleTimer.tick() ? 1 : 0);
- if (settleTimer.tick()) {
+ boolean done = justThrew ? throwSettleTimer.tick() : settleTimer.tick();
+ if (done) {
  justThrew = false;
  state = State.SCANNING;
  }
