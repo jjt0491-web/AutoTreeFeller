@@ -23,3 +23,22 @@ java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
 }
+
+task buildRust(type: Exec) {
+    workingDir 'rust'
+    commandLine System.getProperty('user.home') + '/.cargo/bin/cargo', 'build', '--release'
+}
+
+processResources.dependsOn buildRust
+
+task copyNativeLib(type: Copy, dependsOn: buildRust) {
+    def ext = System.getProperty("os.name").toLowerCase().contains("win")
+        ? "dll"
+        : System.getProperty("os.name").toLowerCase().contains("mac")
+            ? "dylib" : "so"
+    from "rust/target/release/"
+    include "*.${ext}"
+    into "src/main/resources/natives/"
+}
+
+processResources.dependsOn copyNativeLib

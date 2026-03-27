@@ -2,6 +2,7 @@ package com.sylvanforager.autotreeleller.sequencer;
 
 import com.sylvanforager.autotreeleller.AutoTreeFeller;
 import com.sylvanforager.autotreeleller.look.PlayerLookHelper;
+import com.sylvanforager.autotreeleller.navigation.TreeNavigator;
 import com.sylvanforager.autotreeleller.scanner.BlockScanner;
 import com.sylvanforager.autotreeleller.util.HumanTimer;
 import net.minecraft.block.BlockState;
@@ -18,7 +19,7 @@ public class BreakSequencer {
  public enum State {
  IDLE, SCANNING, TURNING, BREAKING,
  SETTLING, JUMPING, WAITING_FOR_APEX,
- WALKING, THROWING
+ WALKING, THROWING, NAVIGATING
  }
 
  private State state = State.IDLE;
@@ -40,6 +41,7 @@ public class BreakSequencer {
  private final HumanTimer settleTimer = new HumanTimer(2, 4);
  private final HumanTimer apexTimer = new HumanTimer(8, 13);
  private final HumanTimer throwSettleTimer = new HumanTimer(12, 18);
+ private final TreeNavigator navigator = new TreeNavigator();
 
  // ── toggle ────────────────────────────────────────────────────────────
  public void toggle() {
@@ -57,6 +59,7 @@ public class BreakSequencer {
  breakHoldTicks = 0;
  queue.clear();
  lookHelper.reset();
+ navigator.reset(client);
  AutoTreeFeller.LOGGER.info("[ATF] Disabled");
  return;
  }
@@ -105,8 +108,11 @@ public class BreakSequencer {
  queue.removeIf(pos -> client.world.getBlockState(pos).isAir());
 
  if (queue.isEmpty()) {
- state = State.IDLE;
- AutoTreeFeller.LOGGER.info("[ATF] Tree complete");
+ // tree done — navigate to next tree
+ navigator.reset(client);
+ navigator.start();
+ state = State.NAVIGATING;
+ AutoTreeFeller.LOGGER.info("[ATF] Tree complete, navigating to next");
  return;
  }
 
@@ -419,6 +425,21 @@ public class BreakSequencer {
  throwSettleTimer.reset();
  settleTimer.reset();
  state = State.SETTLING;
+ }
+
+ case NAVIGATING -> {
+ navigator.tick(client);
+ if (navigator.hasArrived()) {
+ navigator.reset(client);
+ firstTarget = true;
+ current = null;
+ state = State.SCANNING;
+ AutoTreeFeller.LOGGER.info("[ATF] Arrived at next tree, starting break");
+ }
+ if (navigator.isIdle()) {
+ state = State.IDLE;
+ AutoTreeFeller.LOGGER.info("[ATF] No more trees found");
+ }
  }
 
  case IDLE -> {}
