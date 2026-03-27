@@ -1,47 +1,50 @@
 package com.sylvanforager.autotreeleller;
 
-import net.fabricmc.api.ClientModInitializer;
-import org.lwjgl.glfw.GLFW;
-import com.sylvanforager.autotreeleller.config.TreeFellerConfig;
-import com.sylvanforager.autotreeleller.scanner.BlockScanner;
 import com.sylvanforager.autotreeleller.sequencer.BreakSequencer;
-import com.sylvanforager.autotreeleller.breaker.BlockBreaker;
-import com.sylvanforager.autotreeleller.reach.ReachChecker;
+import net.fabricmc.api.ClientModInitializer;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.util.InputUtil;
+import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class AutoTreeFeller implements ClientModInitializer {
-    public static final String MOD_ID = "auto-tree-feller";
-    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+ public static final Logger LOGGER = LoggerFactory.getLogger("auto-tree-feller");
+ public static BreakSequencer breakSequencer;
+ public static KeyBinding toggleKey;
+ private static boolean rKeyPressed = false;
 
-    public static TreeFellerConfig config;
+ @Override
+ public void onInitializeClient() {
+ breakSequencer = new BreakSequencer();
 
-    // Modules
-    public static BlockScanner blockScanner;
-    public static BreakSequencer breakSequencer;
-    public static BlockBreaker blockBreaker;
-    public static ReachChecker reachChecker;
+ // Use GLFW polling for 1.21.11
+ toggleKey = new KeyBinding(
+ "key.auto-tree-feller.toggle",
+ InputUtil.Type.KEYSYM,
+ GLFW.GLFW_KEY_R,
+ KeyBinding.Category.MISC
+ );
 
-    // Key state for R key
-    public static boolean rKeyPressed = false;
+ LOGGER.info("[AutoTreeFeller] Initialized");
+ }
 
-    @Override
-    public void onInitializeClient() {
-        breakSequencer = new BreakSequencer();
-        
-        LOGGER.info("Auto Tree Feller starting...");
+ public static void onClientTick(MinecraftClient client) {
+ if (client.player == null || client.world == null) return;
 
-        config = new TreeFellerConfig();
-        config.load();
+ // Poll toggle key with GLFW
+ long windowHandle = client.getWindow().getHandle();
+ boolean isRPressed = GLFW.glfwGetKey(windowHandle, GLFW.GLFW_KEY_R) == GLFW.GLFW_PRESS;
 
-        blockScanner = new BlockScanner();
-        blockBreaker = new BlockBreaker();
-        reachChecker = new ReachChecker();
+ if (isRPressed && !rKeyPressed) {
+ breakSequencer.toggle();
+ }
+ rKeyPressed = isRPressed;
+ toggleKey.setPressed(isRPressed);
 
-        LOGGER.info("Auto Tree Feller initialized");
-    }
-
-    public static TreeFellerConfig getConfig() {
-        return config;
-    }
+ if (breakSequencer.isActive()) {
+ breakSequencer.tick(client);
+ }
+ }
 }

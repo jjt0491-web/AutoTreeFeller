@@ -1,170 +1,148 @@
 package com.sylvanforager.autotreeleller.scanner;
 
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.block.Blocks;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import com.sylvanforager.autotreeleller.AutoTreeFeller;
-import com.sylvanforager.autotreeleller.config.TreeFellerConfig;
+import net.minecraft.world.RaycastContext;
 import java.util.*;
 
 public class BlockScanner {
+ private static final int HORIZONTAL_RADIUS = 8;
+ private static final int HEIGHT_REACH = 25;
 
-    /**
-     * Static convenience method for BreakSequencer.
-     */
-    public static Queue<BlockPos> scan(PlayerEntity player) {
-        return new BlockScanner().scan(player, 5); // default radius 5
-    }
+ public static Queue<BlockPos> scan(ClientPlayerEntity player) {
+ List<BlockPos> blocks = new ArrayList<>();
+ BlockPos origin = player.getBlockPos();
+ MinecraftClient client = MinecraftClient.getInstance();
 
-    /**
-     * Simple visibility check - skip blocks likely occluded by leaves.
-     */
-    private static boolean isLikelyVisible(PlayerEntity player, BlockPos pos) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.world == null) return true;
+ for (int y = -2; y <= HEIGHT_REACH; y++) {
+ int radius = HORIZONTAL_RADIUS + (y > 0 ? y / 6 : 0);
+ for (int x = -radius; x <= radius; x++) {
+ for (int z = -radius; z <= radius; z++) {
+ BlockPos check = origin.add(x, y, z);
+ if (client.world.getBlockState(check).getBlock()
+ == Blocks.STRIPPED_SPRUCE_WOOD) {
+ blocks.add(check);
+ }
+ }
+ }
+ }
 
-        // If player is below the block, check if there's a block above
-        if (player.getY() < pos.getY()) {
-            BlockPos above = pos.up();
-            if (!client.world.getBlockState(above).isAir()) {
-                return false; // likely occluded by leaves
-            }
-        }
-        return true;
-    }
+ blocks.sort((a, b) -> {
+ boolean aVis = hasLineOfSight(player, a);
+ boolean bVis = hasLineOfSight(player, b);
+ if (aVis && !bVis) return -1;
+ if (!aVis && bVis) return 1;
+ if (a.getY() != b.getY()) return Integer.compare(a.getY(), b.getY());
+ double da = player.getEyePos().squaredDistanceTo(Vec3d.ofCenter(a));
+ double db = player.getEyePos().squaredDistanceTo(Vec3d.ofCenter(b));
+ return Double.compare(da, db);
+ });
 
-    /**
-     * Finds the nearest in-reach block from current position without a full rescan.
-     */
-    public static BlockPos findNearest(PlayerEntity player, double maxDist) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.world == null) return null;
+ return new LinkedList<>(blocks);
+ }
 
-        BlockPos playerPos = player.getBlockPos();
-        BlockPos nearest = null;
-        double nearestDist = Double.MAX_VALUE;
-        int r = (int) Math.ceil(maxDist);
+ public static BlockPos findLowest(ClientPlayerEntity player,
+ Queue<BlockPos> queue) {
+ return queue.stream()
+ .filter(p -> !MinecraftClient.getInstance().world
+ .getBlockState(p).isAir())
+ .filter(p -> hasLineOfSight(player, p))
+ .min(Comparator.comparingInt(BlockPos::getY))
+ .orElse(null);
+ }
 
-        for (int x = -r; x <= r; x++) {
-            for (int y = -r; y <= r; y++) {
-                for (int z = -r; z <= r; z++) {
-                    BlockPos check = playerPos.add(x, y, z);
-                    // use eye position for distance
-                    double d = player.getEyePos().distanceTo(Vec3d.ofCenter(check));
-                    if (d > maxDist) continue;
-                    if (client.world.getBlockState(check).getBlock()
-                        != Blocks.STRIPPED_SPRUCE_WOOD) continue;
+ public static BlockPos findOptimalTarget(ClientPlayerEntity player,
+ Queue<BlockPos> queue, double maxDist) {
+ List<BlockPos> candidates = new ArrayList<>();
+ MinecraftClient client = MinecraftClient.getInstance();
 
-                    if (!isLikelyVisible(player, check)) continue;
+ for (BlockPos pos : queue) {
+ if (client.world.getBlockState(pos).isAir()) continue;
+ double dist = player.getEyePos().distanceTo(Vec3d.ofCenter(pos));
+ if (dist <= maxDist && hasLineOfSight(player, pos)) {
+ candidates.add(pos);
+ }
+ }
 
-                    if (d < nearestDist) {
-                        nearestDist = d;
-                        nearest = check;
-                    }
-                }
-            }
-        }
-        return nearest;
-    }
+ if (candidates.isEmpty()) return findNearest(player, maxDist);
 
-    /**
-     * Find the block that has the most other queued blocks within 4 blocks of it.
-     * This is the "hotspot" — swinging here hits the most blocks via sweep.
-     */
-    public static BlockPos findOptimalTarget(PlayerEntity player,
-            Queue<BlockPos> queue, double maxDist) {
-        BlockPos best = null;
-        int bestScore = -1;
-        List<BlockPos> queueList = new ArrayList<>(queue);
+ BlockPos best = null;
+ int bestScore = -1;
+ for (BlockPos candidate : candidates) {
+ int score = 0;
+ for (BlockPos other : candidates) {
+ if (!other.equals(candidate)
+ && candidate.getSquaredDistance(other) <= 16) {
+ score++;
+ }
+ }
+ if (score > bestScore) {
+ bestScore = score;
+ best = candidate;
+ }
+ }
+ return best != null ? best : candidates.get(0);
+ }
 
-        for (BlockPos candidate : queueList) {
-            // use eye position for distance
-            double dist = player.getEyePos().distanceTo(Vec3d.ofCenter(candidate));
-            if (dist > maxDist) continue;
-            // must have line of sight
-            if (!isLikelyVisible(player, candidate)) continue;
-            // score = how many other queued blocks are within 4 blocks of this one
-            int score = 0;
-            for (BlockPos other : queueList) {
-                if (!other.equals(candidate) &&
-                        candidate.getSquaredDistance(other) <= 16) { // 4 blocks radius
-                    score++;
-                }
-            }
-            if (score > bestScore) {
-                bestScore = score;
-                best = candidate;
-            }
-        }
-        // fallback to nearest if nothing scored
-        if (best == null) best = findNearest(player, maxDist);
-        return best;
-    }
+ public static BlockPos findNearest(ClientPlayerEntity player, double maxDist) {
+ BlockPos origin = player.getBlockPos();
+ BlockPos nearest = null;
+ double nearestDist = Double.MAX_VALUE;
+ int r = (int) Math.ceil(maxDist);
+ MinecraftClient client = MinecraftClient.getInstance();
 
-    /**
-     * Find the absolute lowest block in the queue.
-     */
-    public static BlockPos findLowest(PlayerEntity player, Queue<BlockPos> queue) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.world == null) return null;
-        return queue.stream()
-            .filter(pos -> !client.world.getBlockState(pos).isAir())
-            .filter(pos -> isLikelyVisible(player, pos))
-            .min(Comparator.comparingInt(BlockPos::getY))
-            .orElse(null);
-    }
+ for (int x = -r; x <= r; x++) {
+ for (int y = -r; y <= r; y++) {
+ for (int z = -r; z <= r; z++) {
+ BlockPos check = origin.add(x, y, z);
+ if (client.world.getBlockState(check).getBlock()
+ != Blocks.STRIPPED_SPRUCE_WOOD) continue;
+ double d = player.getEyePos()
+ .distanceTo(Vec3d.ofCenter(check));
+ if (d > maxDist) continue;
+ if (!hasLineOfSight(player, check)) continue;
+ if (d < nearestDist) {
+ nearestDist = d;
+ nearest = check;
+ }
+ }
+ }
+ }
+ return nearest;
+ }
 
-    public Queue<BlockPos> scan(PlayerEntity player, int radius) {
-        TreeFellerConfig config = AutoTreeFeller.getConfig();
-        MinecraftClient client = MinecraftClient.getInstance();
+ public static boolean hasAnyNearby(ClientPlayerEntity player, double radius) {
+ BlockPos origin = player.getBlockPos();
+ int r = (int) Math.ceil(radius);
+ MinecraftClient client = MinecraftClient.getInstance();
+ for (int x = -r; x <= r; x++) {
+ for (int y = -5; y <= 25; y++) {
+ for (int z = -r; z <= r; z++) {
+ if (client.world.getBlockState(origin.add(x, y, z))
+ .getBlock() == Blocks.STRIPPED_SPRUCE_WOOD) {
+ return true;
+ }
+ }
+ }
+ }
+ return false;
+ }
 
-        if (client.world == null) return new ArrayDeque<>();
-
-        BlockPos playerPos = player.getBlockPos();
-        List<BlockPos> blocks = new ArrayList<>();
-
-        int horizontalRadius = 8; // was 5, wider to catch full tree spread
-        int heightReach = 25; // was 20, taller for big trees
-
-        for (int y = -2; y <= heightReach; y++) {
-            int r = horizontalRadius + (y > 0 ? y / 6 : 0);
-            for (int x = -r; x <= r; x++) {
-                for (int z = -r; z <= r; z++) {
-                    BlockPos check = playerPos.add(x, y, z);
-                    if (client.world.getBlockState(check).getBlock() == Blocks.STRIPPED_SPRUCE_WOOD) {
-                        blocks.add(check);
-                    }
-                }
-            }
-        }
-
-        // Primary sort: Y ascending (lowest first)
-        // Secondary sort: distance to player (closest at same Y level first)
-        blocks.sort((a, b) -> {
-            if (a.getY() != b.getY()) return Integer.compare(a.getY(), b.getY());
-            double da = a.getSquaredDistance(playerPos);
-            double db = b.getSquaredDistance(playerPos);
-            return Double.compare(da, db);
-        });
-
-        // Then apply visibility filter while preserving Y-order
-        List<BlockPos> filtered = new ArrayList<>();
-        for (BlockPos bp : blocks) {
-            if (isLikelyVisible(player, bp)) {
-                filtered.add(bp);
-            }
-        }
-        blocks = filtered;
-
-        int maxSize = config.maxQueueSize;
-        if (blocks.size() > maxSize) {
-            blocks = blocks.subList(0, maxSize);
-        }
-
-        AutoTreeFeller.LOGGER.info("[SCAN] Found {} stripped_spruce_wood blocks", blocks.size());
-
-        return new ArrayDeque<>(blocks);
-    }
+ public static boolean hasLineOfSight(ClientPlayerEntity player, BlockPos pos) {
+ MinecraftClient client = MinecraftClient.getInstance();
+ if (client.world == null) return false;
+ BlockHitResult hit = client.world.raycast(new RaycastContext(
+ player.getEyePos(),
+ Vec3d.ofCenter(pos),
+ RaycastContext.ShapeType.COLLIDER,
+ RaycastContext.FluidHandling.NONE,
+ player));
+ return hit.getType() != HitResult.Type.BLOCK
+ || hit.getBlockPos().equals(pos);
+ }
 }
