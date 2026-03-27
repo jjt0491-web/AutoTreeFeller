@@ -93,7 +93,8 @@ public class BreakSequencer {
 
  // stop if no tree nearby (walked away)
  if (state != State.IDLE && state != State.WALKING
- && state != State.THROWING && state != State.SCANNING) {
+ && state != State.THROWING && state != State.SCANNING
+ && state != State.NAVIGATING) {
  if (!BlockScanner.hasAnyNearby(client.player, 20.0)) {
  releaseAll(client);
  return;
@@ -180,12 +181,12 @@ public class BreakSequencer {
  }
 
  // try walking closer if slightly out of range
- BlockPos nearby = BlockScanner.findNearest(client.player, 7.0);
+ BlockPos nearby = BlockScanner.findNearest(client.player, 9.0);
  if (nearby != null) {
  double xzDist = Math.sqrt(
  Math.pow(nearby.getX() - client.player.getX(), 2) +
  Math.pow(nearby.getZ() - client.player.getZ(), 2));
- if (xzDist > 2.0) {
+ if (xzDist > 1.0) {
  state = State.WALKING;
  return;
  }
@@ -295,7 +296,13 @@ public class BreakSequencer {
  jumpTicks++;
 
  queue.removeIf(pos -> client.world.getBlockState(pos).isAir());
- if (queue.isEmpty()) { state = State.IDLE; return; }
+ if (queue.isEmpty()) {
+ client.options.attackKey.setPressed(false);
+ navigator.reset(client);
+ navigator.start();
+ state = State.NAVIGATING;
+ return;
+ }
 
  // continuously find best target mid-air
  BlockPos airTarget = BlockScanner.findOptimalTarget(
@@ -434,8 +441,9 @@ public class BreakSequencer {
  current = null;
  state = State.SCANNING;
  AutoTreeFeller.LOGGER.info("[ATF] Arrived at next tree, starting break");
+ return;
  }
- if (navigator.isIdle()) {
+ if (navigator.isIdle() && navigator.hasSearched()) {
  state = State.IDLE;
  AutoTreeFeller.LOGGER.info("[ATF] No more trees found");
  }

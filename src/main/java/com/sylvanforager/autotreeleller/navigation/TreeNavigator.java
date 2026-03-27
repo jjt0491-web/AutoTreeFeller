@@ -19,10 +19,12 @@ public class TreeNavigator {
     private int pathIndex = 0;
     private int stuckTicks = 0;
     private BlockPos lastPos = null;
+    private boolean searched = false;
 
     private final EtherWarp etherWarp = new EtherWarp();
 
     public boolean isIdle() { return state == NavState.IDLE; }
+    public boolean hasSearched() { return searched; }
     public boolean hasArrived() { return state == NavState.ARRIVED; }
 
     public void start() {
@@ -35,6 +37,7 @@ public class TreeNavigator {
         path = null;
         pathIndex = 0;
         stuckTicks = 0;
+        searched = false;
         etherWarp.reset();
         releaseKeys(client);
     }
@@ -46,6 +49,7 @@ public class TreeNavigator {
 
             case FINDING_TREE -> {
                 nextTree = TreeClusterFinder.findNextTree(client.player);
+                searched = true;
                 if (nextTree == null) {
                     AutoTreeFeller.LOGGER.info("[NAV] No next tree found");
                     state = NavState.IDLE;
