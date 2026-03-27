@@ -16,520 +16,598 @@ import java.util.Queue;
 
 public class BreakSequencer {
 
- public enum State {
- IDLE, SCANNING, TURNING, BREAKING,
- SETTLING, JUMPING, WAITING_FOR_APEX,
- WALKING, THROWING, NAVIGATING
- }
+    public enum State {
+        IDLE, SCANNING, TURNING, BREAKING,
+        SETTLING, JUMPING, WAITING_FOR_APEX,
+        WALKING, THROWING, NAVIGATING
+    }
 
- private State state = State.IDLE;
- private Queue<BlockPos> queue = new LinkedList<>();
- private BlockPos current = null;
- private boolean firstTarget = true;
- private boolean justThrew = false;
- private int jumpTicks = 0;
- private int jumpCooldown = 0;
- private int breakHoldTicks = 0;
- private int preBreakDelay = 0;
- private int jumpAttempts = 0;
- private BlockPos lastJumpTarget = null;
- private int throwHoldTicks = 0;
- private int walkStuckTicks = 0;
- private BlockPos lastWalkPos = null;
+    private State state = State.IDLE;
+    private Queue<BlockPos> queue = new LinkedList<>();
+    private BlockPos current = null;
+    private boolean firstTarget = true;
+    private boolean justThrew = false;
+    private int jumpTicks = 0;
+    private int jumpCooldown = 0;
+    private int breakHoldTicks = 0;
+    private int jumpAttempts = 0;
+    private BlockPos lastJumpTarget = null;
+    private int throwHoldTicks = 0;
+    private int walkStuckTicks = 0;
+    private BlockPos lastWalkPos = null;
 
- private static final int MAX_HOLD_TICKS = 40;
- private static final double REACH = 4.5;
+    // ── Jump-loop & scan-failure escape ───────────────────────────────────
+    private int consecutiveJumps = 0;
+    private int scanFailures = 0;
+    private static final int MAX_CONSECUTIVE_JUMPS = 4;
+    private static final int MAX_SCAN_FAILURES = 6;
 
- private final PlayerLookHelper lookHelper = new PlayerLookHelper();
- private final HumanTimer settleTimer = new HumanTimer(2, 4);
- private final HumanTimer apexTimer = new HumanTimer(8, 13);
- private final HumanTimer throwSettleTimer = new HumanTimer(12, 18);
- private final TreeNavigator navigator = new TreeNavigator();
+    private static final int MAX_HOLD_TICKS = 40;
+    private static final double REACH = 4.5;
 
- // ── toggle ────────────────────────────────────────────────────────────
- public void toggle() {
- MinecraftClient client = MinecraftClient.getInstance();
- if (state != State.IDLE) {
- releaseAll(client);
- state = State.IDLE;
- current = null;
- firstTarget = true;
- justThrew = false;
- jumpTicks = 0;
- jumpCooldown = 0;
- jumpAttempts = 0;
- lastJumpTarget = null;
- breakHoldTicks = 0;
- queue.clear();
- lookHelper.reset();
- navigator.reset(client);
- AutoTreeFeller.LOGGER.info("[ATF] Disabled");
- return;
- }
+    private final PlayerLookHelper lookHelper = new PlayerLookHelper();
+    private final HumanTimer settleTimer = new HumanTimer(1, 2);
+    private final HumanTimer apexTimer = new HumanTimer(8, 13);
+    private final HumanTimer throwSettleTimer = new HumanTimer(12, 18);
+    private final TreeNavigator navigator = new TreeNavigator();
 
- if (client.player == null || client.world == null) return;
+    // ── toggle ────────────────────────────────────────────────────────────
+    public void toggle() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (state != State.IDLE) {
+            releaseAll(client);
+            state = State.IDLE;
+            current = null;
+            firstTarget = true;
+            justThrew = false;
+            jumpTicks = 0;
+            jumpCooldown = 0;
+            jumpAttempts = 0;
+            consecutiveJumps = 0;
+            scanFailures = 0;
+            lastJumpTarget = null;
+            breakHoldTicks = 0;
+            queue.clear();
+            lookHelper.reset();
+            navigator.reset(client);
+            AutoTreeFeller.LOGGER.info("[ATF] Disabled");
+            return;
+        }
 
- if (!BlockScanner.hasAnyNearby(client.player, 20.0)) {
- client.player.sendMessage(
- net.minecraft.text.Text.literal("§c[AutoFeller] No fig tree nearby!"),
- true);
- return;
- }
+        if (client.player == null || client.world == null) return;
 
- firstTarget = true;
- state = State.SCANNING;
- AutoTreeFeller.LOGGER.info("[ATF] Enabled");
- }
+        if (!BlockScanner.hasAnyNearby(client.player, 20.0)) {
+            client.player.sendMessage(
+                net.minecraft.text.Text.literal("§c[AutoFeller] No fig tree nearby!"),
+                true);
+            return;
+        }
 
- public boolean isActive() { return state != State.IDLE; }
- public State getState() { return state; }
+        firstTarget = true;
+        consecutiveJumps = 0;
+        scanFailures = 0;
+        state = State.SCANNING;
+        AutoTreeFeller.LOGGER.info("[ATF] Enabled");
+    }
 
- // ── main tick ─────────────────────────────────────────────────────────
- public void tick(MinecraftClient client) {
- if (client.player == null || client.world == null) return;
- if (jumpCooldown > 0) jumpCooldown--;
+    public boolean isActive() { return state != State.IDLE; }
+    public State getState() { return state; }
 
- // global sweep purge every tick
- if (state != State.IDLE && state != State.SCANNING) {
- queue.removeIf(pos -> client.world.getBlockState(pos).isAir());
- }
+    // ── main tick ─────────────────────────────────────────────────────────
+    public void tick(MinecraftClient client) {
+        if (client.player == null || client.world == null) return;
+        if (jumpCooldown > 0) jumpCooldown--;
 
- // stop if no tree nearby (walked away) — transition to navigation
- if (state != State.IDLE && state != State.WALKING
- && state != State.THROWING && state != State.SCANNING
- && state != State.NAVIGATING) {
- if (!BlockScanner.hasAnyNearby(client.player, 20.0)) {
- releaseAll(client);
- queue.clear();
- navigator.reset(client);
- navigator.start();
- state = State.NAVIGATING;
- AutoTreeFeller.LOGGER.info("[ATF] No blocks nearby, navigating to next tree");
- return;
- }
- }
+        // global sweep purge every tick
+        if (state != State.IDLE && state != State.SCANNING) {
+            queue.removeIf(pos -> client.world.getBlockState(pos).isAir());
+        }
 
- switch (state) {
+        // stop if no tree nearby — transition to navigation
+        if (state != State.IDLE && state != State.WALKING
+                && state != State.THROWING && state != State.SCANNING
+                && state != State.NAVIGATING) {
+            if (!BlockScanner.hasAnyNearby(client.player, 20.0)) {
+                releaseAll(client);
+                queue.clear();
+                BlockScanner.resetNearbyCache();
+                navigator.reset(client);
+                navigator.start();
+                state = State.NAVIGATING;
+                AutoTreeFeller.LOGGER.info("[ATF] No blocks nearby, navigating to next tree");
+                return;
+            }
+        }
 
- // ── SCANNING ─────────────────────────────────────────────────
- case SCANNING -> {
- queue = BlockScanner.scan(client.player);
- queue.removeIf(pos -> client.world.getBlockState(pos).isAir());
+        switch (state) {
 
- if (queue.isEmpty()) {
- // tree done — navigate to next tree
- navigator.reset(client);
- navigator.start();
- state = State.NAVIGATING;
- AutoTreeFeller.LOGGER.info("[ATF] Tree complete, navigating to next");
- return;
- }
+            // ── SCANNING ─────────────────────────────────────────────────
+            case SCANNING -> {
+                queue = BlockScanner.scan(client.player);
+                queue.removeIf(pos -> client.world.getBlockState(pos).isAir());
 
- BlockPos next = firstTarget
- ? BlockScanner.findLowest(client.player, queue)
- : BlockScanner.findOptimalTarget(client.player, queue, REACH);
+                if (queue.isEmpty()) {
+                    // Tree done — navigate to next tree
+                    BlockScanner.resetNearbyCache();
+                    navigator.reset(client);
+                    navigator.start();
+                    state = State.NAVIGATING;
+                    consecutiveJumps = 0;
+                    scanFailures = 0;
+                    AutoTreeFeller.LOGGER.info("[ATF] Tree complete, navigating to next");
+                    return;
+                }
 
- if (next == null) {
- // nothing in range — need to jump or walk
- state = State.JUMPING;
- return;
- }
+                BlockPos next = firstTarget
+                    ? BlockScanner.findLowest(client.player, queue)
+                    : BlockScanner.findOptimalTarget(client.player, queue, REACH);
 
- firstTarget = false;
- current = next;
- lookHelper.startLookAt(client.player, current);
- state = State.TURNING;
- }
+                if (next == null) {
+                    scanFailures++;
 
- // ── TURNING ──────────────────────────────────────────────────
- case TURNING -> {
- boolean locked = lookHelper.tick(client.player);
- if (locked) {
- if (isValidTarget(client, current)) {
- client.options.attackKey.setPressed(true);
- client.player.swingHand(Hand.MAIN_HAND);
- breakHoldTicks = 1;
- }
- state = State.BREAKING;
- }
- }
+                    // Escape: too many failed jumps/scans → throw or navigate
+                    if (consecutiveJumps >= MAX_CONSECUTIVE_JUMPS
+                            || scanFailures >= MAX_SCAN_FAILURES) {
+                        BlockPos throwTarget = BlockScanner.findOptimalTarget(
+                            client.player, queue, 20.0);
+                        if (throwTarget != null) {
+                            current = throwTarget;
+                            lookHelper.startLookAt(client.player, current);
+                            state = State.THROWING;
+                            AutoTreeFeller.LOGGER.info(
+                                "[ATF] Can't reach blocks after {} jumps, throwing",
+                                consecutiveJumps);
+                        } else {
+                            BlockScanner.resetNearbyCache();
+                            navigator.reset(client);
+                            navigator.start();
+                            state = State.NAVIGATING;
+                            AutoTreeFeller.LOGGER.info(
+                                "[ATF] Unreachable blocks, navigating to next tree");
+                        }
+                        consecutiveJumps = 0;
+                        scanFailures = 0;
+                        return;
+                    }
 
- // ── BREAKING ─────────────────────────────────────────────────
- case BREAKING -> {
- if (current == null || queue.isEmpty()) {
- state = State.SCANNING;
- return;
- }
+                    state = State.JUMPING;
+                    return;
+                }
 
- BlockState bs = client.world.getBlockState(current);
+                // Found a reachable target
+                firstTarget = false;
+                scanFailures = 0;
+                current = next;
+                lookHelper.startLookAt(client.player, current);
+                state = State.TURNING;
+            }
 
- if (bs.isAir()) {
- client.options.attackKey.setPressed(false);
- breakHoldTicks = 0;
- settleTimer.reset();
- state = State.SETTLING;
- return;
- }
+            // ── TURNING ──────────────────────────────────────────────────
+            case TURNING -> {
+                boolean locked = lookHelper.tick(client.player);
+                if (locked) {
+                    if (isValidTarget(client, current)) {
+                        client.options.attackKey.setPressed(true);
+                        client.player.swingHand(Hand.MAIN_HAND);
+                        breakHoldTicks = 1;
+                    }
+                    state = State.BREAKING;
+                }
+            }
 
- double eyeDist = client.player.getEyePos()
- .distanceTo(Vec3d.ofCenter(current));
+            // ── BREAKING ─────────────────────────────────────────────────
+            case BREAKING -> {
+                if (current == null) {
+                    releaseAll(client);
+                    state = State.SCANNING;
+                    return;
+                }
 
- if (eyeDist > REACH) {
- client.options.attackKey.setPressed(false);
- breakHoldTicks = 0;
+                BlockState bs = client.world.getBlockState(current);
 
- // check if any block is reachable first
- BlockPos reachable = BlockScanner.findOptimalTarget(
- client.player, queue, REACH);
- if (reachable != null) {
- current = reachable;
- lookHelper.startLookAt(client.player, current);
- state = State.TURNING;
- return;
- }
+                // ── Block broken — seamless transition to next ────────────
+                if (bs.isAir()) {
+                    consecutiveJumps = 0;
+                    scanFailures = 0;
+                    queue.remove(current);
 
- // try walking closer if slightly out of range
- BlockPos nearby = BlockScanner.findNearest(client.player, 9.0);
- if (nearby != null) {
- double xzDist = Math.sqrt(
- Math.pow(nearby.getX() - client.player.getX(), 2) +
- Math.pow(nearby.getZ() - client.player.getZ(), 2));
- if (xzDist > 1.0) {
- state = State.WALKING;
- return;
- }
- }
+                    // Immediately find the next reachable block
+                    queue.removeIf(pos -> client.world.getBlockState(pos).isAir());
+                    BlockPos next = BlockScanner.findOptimalTarget(
+                        client.player, queue, REACH);
 
- // jump if on ground and cooldown expired
- if (client.player.isOnGround() && jumpCooldown == 0) {
- BlockPos jumpTarget = BlockScanner.findOptimalTarget(
- client.player, queue, 6.0);
- if (jumpTarget != null) {
- current = jumpTarget;
- lookHelper.startLookAt(client.player, current);
- }
- state = State.JUMPING;
- } else if (!client.player.isOnGround()) {
- state = State.WAITING_FOR_APEX;
- }
- return;
- }
+                    if (next != null) {
+                        // Seamless: keep attack held, smooth-aim to next
+                        current = next;
+                        lookHelper.startLookAt(client.player, current);
+                        breakHoldTicks = 0;
+                        // Stay in BREAKING — no pause between blocks
+                    } else {
+                        // Nothing in reach right now
+                        client.options.attackKey.setPressed(false);
+                        breakHoldTicks = 0;
 
- // aim check
- Vec3d eyes = client.player.getEyePos();
- Vec3d toBlock = Vec3d.ofCenter(current).subtract(eyes).normalize();
- Vec3d lookVec = client.player.getRotationVec(1.0f);
- if (lookVec.dotProduct(toBlock) < 0.85) {
- client.options.attackKey.setPressed(false);
- breakHoldTicks = 0;
- state = State.TURNING;
- lookHelper.startLookAt(client.player, current);
- return;
- }
+                        if (queue.isEmpty()) {
+                            BlockScanner.resetNearbyCache();
+                            navigator.reset(client);
+                            navigator.start();
+                            state = State.NAVIGATING;
+                            AutoTreeFeller.LOGGER.info(
+                                "[ATF] Tree complete, navigating to next");
+                        } else {
+                            // Blocks exist but out of reach — quick settle then re-scan
+                            settleTimer.reset();
+                            state = State.SETTLING;
+                        }
+                    }
+                    return;
+                }
 
- // safety cutoff
- if (breakHoldTicks >= MAX_HOLD_TICKS) {
- client.options.attackKey.setPressed(false);
- breakHoldTicks = 0;
- queue.poll();
- settleTimer.reset();
- state = State.SETTLING;
- return;
- }
+                // ── Out of reach ──────────────────────────────────────────
+                double eyeDist = client.player.getEyePos()
+                    .distanceTo(Vec3d.ofCenter(current));
 
- if (!isValidTarget(client, current)) {
- client.options.attackKey.setPressed(false);
- queue.poll();
- state = State.SCANNING;
- return;
- }
+                if (eyeDist > REACH) {
+                    client.options.attackKey.setPressed(false);
+                    breakHoldTicks = 0;
 
- // pre-break human hesitation
- if (preBreakDelay > 0) {
- preBreakDelay--;
- return;
- }
+                    // Try to find something in reach
+                    BlockPos reachable = BlockScanner.findOptimalTarget(
+                        client.player, queue, REACH);
+                    if (reachable != null) {
+                        current = reachable;
+                        lookHelper.startLookAt(client.player, current);
+                        state = State.TURNING;
+                        return;
+                    }
 
- client.options.attackKey.setPressed(true);
- client.player.swingHand(Hand.MAIN_HAND);
- preBreakDelay = (int)(Math.random() * 3);
- breakHoldTicks++;
- }
+                    // Try walking closer
+                    BlockPos nearby = BlockScanner.findNearest(client.player, 9.0);
+                    if (nearby != null) {
+                        double xzDist = Math.sqrt(
+                            Math.pow(nearby.getX() - client.player.getX(), 2) +
+                            Math.pow(nearby.getZ() - client.player.getZ(), 2));
+                        if (xzDist > 1.0) {
+                            state = State.WALKING;
+                            return;
+                        }
+                    }
 
- // ── SETTLING ─────────────────────────────────────────────────
- case SETTLING -> {
- releaseAll(client);
- boolean done = justThrew ? throwSettleTimer.tick() : settleTimer.tick();
- if (done) {
- justThrew = false;
- state = State.SCANNING;
- }
- }
+                    // Jump if on ground
+                    if (client.player.isOnGround() && jumpCooldown == 0) {
+                        BlockPos jumpTarget = BlockScanner.findOptimalTarget(
+                            client.player, queue, 6.0);
+                        if (jumpTarget != null) {
+                            current = jumpTarget;
+                            lookHelper.startLookAt(client.player, current);
+                        }
+                        state = State.JUMPING;
+                    } else if (!client.player.isOnGround()) {
+                        state = State.WAITING_FOR_APEX;
+                    }
+                    return;
+                }
 
- // ── JUMPING ──────────────────────────────────────────────────
- case JUMPING -> {
- // Stall detector — skip block if stuck jumping too many times
- if (current != null && current.equals(lastJumpTarget)) {
- jumpAttempts++;
- if (jumpAttempts >= 3) {
- jumpAttempts = 0;
- lastJumpTarget = null;
- queue.removeIf(pos -> pos.equals(current));
- state = State.SCANNING;
- return;
- }
- } else {
- jumpAttempts = 0;
- lastJumpTarget = current;
- }
+                // ── Continuous aim tracking while holding attack ──────────
+                boolean aimOk = lookHelper.trackTarget(client.player, current);
 
- client.options.jumpKey.setPressed(true);
- jumpTicks = 0;
- jumpCooldown = 8;
- apexTimer.reset();
+                if (!aimOk) {
+                    // Check if aim drifted way off (e.g. player got pushed)
+                    Vec3d eyes = client.player.getEyePos();
+                    Vec3d toBlock = Vec3d.ofCenter(current).subtract(eyes).normalize();
+                    Vec3d lookVec = client.player.getRotationVec(1.0f);
+                    if (lookVec.dotProduct(toBlock) < 0.55) {
+                        // Way off — full re-aim
+                        client.options.attackKey.setPressed(false);
+                        breakHoldTicks = 0;
+                        lookHelper.startLookAt(client.player, current);
+                        state = State.TURNING;
+                        return;
+                    }
+                    // Moderately off — trackTarget will converge, keep attacking
+                }
 
- // pre-aim at jump target immediately
- BlockPos jumpTarget = BlockScanner.findOptimalTarget(
- client.player, queue, 6.0);
- if (jumpTarget != null) {
- current = jumpTarget;
- lookHelper.startLookAt(client.player, current);
- }
- state = State.WAITING_FOR_APEX;
- }
+                // Safety cutoff
+                if (breakHoldTicks >= MAX_HOLD_TICKS) {
+                    client.options.attackKey.setPressed(false);
+                    breakHoldTicks = 0;
+                    queue.poll();
+                    settleTimer.reset();
+                    state = State.SETTLING;
+                    return;
+                }
 
- // ── WAITING_FOR_APEX ─────────────────────────────────────────
- case WAITING_FOR_APEX -> {
- client.options.jumpKey.setPressed(false);
- jumpTicks++;
+                if (!isValidTarget(client, current)) {
+                    client.options.attackKey.setPressed(false);
+                    queue.poll();
+                    state = State.SCANNING;
+                    return;
+                }
 
- queue.removeIf(pos -> client.world.getBlockState(pos).isAir());
- if (queue.isEmpty()) {
- client.options.attackKey.setPressed(false);
- navigator.reset(client);
- navigator.start();
- state = State.NAVIGATING;
- return;
- }
+                // Continuous attack — no random stutter delays
+                client.options.attackKey.setPressed(true);
+                client.player.swingHand(Hand.MAIN_HAND);
+                breakHoldTicks++;
+            }
 
- // continuously find best target mid-air
- BlockPos airTarget = BlockScanner.findOptimalTarget(
- client.player, queue, 5.5);
- if (airTarget != null && !airTarget.equals(current)) {
- double switchDist = current != null
- ? Vec3d.ofCenter(airTarget)
- .distanceTo(Vec3d.ofCenter(current))
- : 999;
- if (switchDist > 1.5) {
- current = airTarget;
- lookHelper.startLookAt(client.player, current);
- }
- }
+            // ── SETTLING ─────────────────────────────────────────────────
+            case SETTLING -> {
+                releaseAll(client);
+                boolean done = justThrew ? throwSettleTimer.tick() : settleTimer.tick();
+                if (done) {
+                    justThrew = false;
+                    state = State.SCANNING;
+                }
+            }
 
- boolean locked = lookHelper.tick(client.player);
+            // ── JUMPING ──────────────────────────────────────────────────
+            case JUMPING -> {
+                consecutiveJumps++;
 
- if (current != null && locked) {
- BlockState bs = client.world.getBlockState(current);
- if (bs.isAir()) {
- // broken — find next immediately
- BlockPos next = BlockScanner.findOptimalTarget(
- client.player, queue, 5.5);
- if (next != null) {
- current = next;
- lookHelper.startLookAt(client.player, current);
- }
- } else {
- double dist = client.player.getEyePos()
- .distanceTo(Vec3d.ofCenter(current));
- Vec3d eyes = client.player.getEyePos();
- Vec3d toBlock = Vec3d.ofCenter(current)
- .subtract(eyes).normalize();
- Vec3d lookVec = client.player.getRotationVec(1.0f);
+                // Stall detector — same block repeatedly
+                if (current != null && current.equals(lastJumpTarget)) {
+                    jumpAttempts++;
+                    if (jumpAttempts >= 3) {
+                        jumpAttempts = 0;
+                        lastJumpTarget = null;
+                        queue.removeIf(pos -> pos.equals(current));
+                        state = State.SCANNING;
+                        return;
+                    }
+                } else {
+                    jumpAttempts = 0;
+                    lastJumpTarget = current;
+                }
 
- if (dist <= 5.5 && lookVec.dotProduct(toBlock) >= 0.85
- && isValidTarget(client, current)) {
- client.options.attackKey.setPressed(true);
- client.player.swingHand(Hand.MAIN_HAND);
- }
- }
- }
+                client.options.jumpKey.setPressed(true);
+                jumpTicks = 0;
+                jumpCooldown = 8;
+                apexTimer.reset();
 
- // land or timeout
- if ((client.player.isOnGround() && jumpTicks > 5)
- || jumpTicks >= 22) {
- client.options.attackKey.setPressed(false);
- jumpTicks = 0;
- settleTimer.reset();
- state = State.SETTLING;
- }
- }
+                BlockPos jumpTarget = BlockScanner.findOptimalTarget(
+                    client.player, queue, 6.0);
+                if (jumpTarget != null) {
+                    current = jumpTarget;
+                    lookHelper.startLookAt(client.player, current);
+                }
+                state = State.WAITING_FOR_APEX;
+            }
 
- // ── WALKING ──────────────────────────────────────────────────
- case WALKING -> {
- queue.removeIf(pos -> client.world.getBlockState(pos).isAir());
- if (queue.isEmpty()) {
- client.options.forwardKey.setPressed(false);
- client.options.sprintKey.setPressed(false);
- navigator.reset(client);
- navigator.start();
- state = State.NAVIGATING;
- return;
- }
+            // ── WAITING_FOR_APEX ─────────────────────────────────────────
+            case WAITING_FOR_APEX -> {
+                client.options.jumpKey.setPressed(false);
+                jumpTicks++;
 
- BlockPos target = BlockScanner.findNearest(client.player, 20.0);
- if (target == null) {
- client.options.forwardKey.setPressed(false);
- client.options.sprintKey.setPressed(false);
- navigator.reset(client);
- navigator.start();
- state = State.NAVIGATING;
- return;
- }
+                queue.removeIf(pos -> client.world.getBlockState(pos).isAir());
+                if (queue.isEmpty()) {
+                    client.options.attackKey.setPressed(false);
+                    BlockScanner.resetNearbyCache();
+                    navigator.reset(client);
+                    navigator.start();
+                    state = State.NAVIGATING;
+                    return;
+                }
 
- double dx = (target.getX() + 0.5) - client.player.getX();
- double dz = (target.getZ() + 0.5) - client.player.getZ();
- double xzDist = Math.sqrt(dx * dx + dz * dz);
+                // Continuously find best target mid-air
+                BlockPos airTarget = BlockScanner.findOptimalTarget(
+                    client.player, queue, 5.5);
+                if (airTarget != null && !airTarget.equals(current)) {
+                    double switchDist = current != null
+                        ? Vec3d.ofCenter(airTarget)
+                            .distanceTo(Vec3d.ofCenter(current))
+                        : 999;
+                    if (switchDist > 1.5) {
+                        current = airTarget;
+                        lookHelper.startLookAt(client.player, current);
+                    }
+                }
 
- if (xzDist < 2.5) {
- client.options.forwardKey.setPressed(false);
- client.options.sprintKey.setPressed(false);
+                boolean locked = lookHelper.tick(client.player);
 
- BlockPos reachable = BlockScanner.findOptimalTarget(
- client.player, queue, REACH);
- if (reachable != null) {
- state = State.SCANNING;
- } else {
- // walked as close as possible — throw axe
- current = BlockScanner.findOptimalTarget(
- client.player, queue, 20.0);
- if (current != null) {
- lookHelper.startLookAt(client.player, current);
- }
- state = State.THROWING;
- }
- return;
- }
+                if (current != null && locked) {
+                    BlockState apexBs = client.world.getBlockState(current);
+                    if (apexBs.isAir()) {
+                        consecutiveJumps = 0;
+                        BlockPos next = BlockScanner.findOptimalTarget(
+                            client.player, queue, 5.5);
+                        if (next != null) {
+                            current = next;
+                            lookHelper.startLookAt(client.player, next);
+                        }
+                    } else {
+                        double dist = client.player.getEyePos()
+                            .distanceTo(Vec3d.ofCenter(current));
+                        Vec3d eyes = client.player.getEyePos();
+                        Vec3d toBlock = Vec3d.ofCenter(current)
+                            .subtract(eyes).normalize();
+                        Vec3d lookVec = client.player.getRotationVec(1.0f);
 
- float targetYaw = (float)(Math.toDegrees(Math.atan2(-dx, dz)));
- float currentYaw = client.player.getYaw();
- float yawDelta = targetYaw - currentYaw;
- while (yawDelta > 180) yawDelta -= 360;
- while (yawDelta < -180) yawDelta += 360;
- client.player.setYaw(currentYaw + yawDelta * 0.3f);
+                        if (dist <= 5.5 && lookVec.dotProduct(toBlock) >= 0.80
+                                && isValidTarget(client, current)) {
+                            client.options.attackKey.setPressed(true);
+                            client.player.swingHand(Hand.MAIN_HAND);
+                        }
+                    }
+                }
 
- client.options.forwardKey.setPressed(true);
- client.options.sprintKey.setPressed(true);
+                // Land or timeout
+                if ((client.player.isOnGround() && jumpTicks > 5)
+                        || jumpTicks >= 22) {
+                    client.options.attackKey.setPressed(false);
+                    jumpTicks = 0;
+                    settleTimer.reset();
+                    state = State.SETTLING;
+                }
+            }
 
- // stuck detection — jump if not moving, give up after too long
- BlockPos walkPos = client.player.getBlockPos();
- if (walkPos.equals(lastWalkPos)) {
- walkStuckTicks++;
- if (walkStuckTicks > 15) {
- client.options.jumpKey.setPressed(true);
- }
- if (walkStuckTicks > 40) {
- // truly stuck — give up walking, try jumping to break
- client.options.forwardKey.setPressed(false);
- client.options.sprintKey.setPressed(false);
- client.options.jumpKey.setPressed(false);
- walkStuckTicks = 0;
- state = State.SCANNING;
- }
- } else {
- walkStuckTicks = 0;
- client.options.jumpKey.setPressed(false);
- }
- lastWalkPos = walkPos;
- }
+            // ── WALKING ──────────────────────────────────────────────────
+            case WALKING -> {
+                queue.removeIf(pos -> client.world.getBlockState(pos).isAir());
+                if (queue.isEmpty()) {
+                    client.options.forwardKey.setPressed(false);
+                    client.options.sprintKey.setPressed(false);
+                    BlockScanner.resetNearbyCache();
+                    navigator.reset(client);
+                    navigator.start();
+                    state = State.NAVIGATING;
+                    return;
+                }
 
- // ── THROWING ─────────────────────────────────────────────────
- case THROWING -> {
- // hold phase — keep use key pressed for 2 ticks then release
- if (throwHoldTicks > 0) {
- throwHoldTicks++;
- if (throwHoldTicks <= 3) {
- client.options.useKey.setPressed(true);
- return;
- }
- // release and settle
- client.options.useKey.setPressed(false);
- throwHoldTicks = 0;
- AutoTreeFeller.LOGGER.info("[ATF] Threw axe at {}", current);
- justThrew = true;
- throwSettleTimer.reset();
- settleTimer.reset();
- state = State.SETTLING;
- return;
- }
+                BlockPos target = BlockScanner.findNearest(client.player, 20.0);
+                if (target == null) {
+                    client.options.forwardKey.setPressed(false);
+                    client.options.sprintKey.setPressed(false);
+                    BlockScanner.resetNearbyCache();
+                    navigator.reset(client);
+                    navigator.start();
+                    state = State.NAVIGATING;
+                    return;
+                }
 
- queue.removeIf(pos -> client.world.getBlockState(pos).isAir());
- if (queue.isEmpty()) {
- navigator.reset(client);
- navigator.start();
- state = State.NAVIGATING;
- return;
- }
+                double dx = (target.getX() + 0.5) - client.player.getX();
+                double dz = (target.getZ() + 0.5) - client.player.getZ();
+                double xzDist = Math.sqrt(dx * dx + dz * dz);
 
- BlockPos throwTarget = BlockScanner.findOptimalTarget(
- client.player, queue, 20.0);
- if (throwTarget == null) {
- navigator.reset(client);
- navigator.start();
- state = State.NAVIGATING;
- return;
- }
+                if (xzDist < 2.5) {
+                    client.options.forwardKey.setPressed(false);
+                    client.options.sprintKey.setPressed(false);
 
- if (!throwTarget.equals(current)) {
- current = throwTarget;
- lookHelper.startLookAt(client.player, current);
- }
+                    BlockPos reachable = BlockScanner.findOptimalTarget(
+                        client.player, queue, REACH);
+                    if (reachable != null) {
+                        state = State.SCANNING;
+                    } else {
+                        current = BlockScanner.findOptimalTarget(
+                            client.player, queue, 20.0);
+                        if (current != null) {
+                            lookHelper.startLookAt(client.player, current);
+                        }
+                        state = State.THROWING;
+                    }
+                    return;
+                }
 
- boolean locked = lookHelper.tick(client.player);
- if (!locked) return;
+                float targetYaw = (float)(Math.toDegrees(Math.atan2(-dx, dz)));
+                float currentYaw = client.player.getYaw();
+                float yawDelta = targetYaw - currentYaw;
+                while (yawDelta > 180) yawDelta -= 360;
+                while (yawDelta < -180) yawDelta += 360;
+                client.player.setYaw(currentYaw + yawDelta * 0.3f);
 
- Vec3d eyes = client.player.getEyePos();
- Vec3d toBlock = Vec3d.ofCenter(throwTarget)
- .subtract(eyes).normalize();
- Vec3d lookVec = client.player.getRotationVec(1.0f);
- if (lookVec.dotProduct(toBlock) < 0.85) return;
+                client.options.forwardKey.setPressed(true);
+                client.options.sprintKey.setPressed(true);
 
- // start holding use key — will release after 3 ticks
- client.options.useKey.setPressed(true);
- throwHoldTicks = 1;
- }
+                // Stuck detection
+                BlockPos walkPos = client.player.getBlockPos();
+                if (walkPos.equals(lastWalkPos)) {
+                    walkStuckTicks++;
+                    if (walkStuckTicks > 15) {
+                        client.options.jumpKey.setPressed(true);
+                    }
+                    if (walkStuckTicks > 40) {
+                        client.options.forwardKey.setPressed(false);
+                        client.options.sprintKey.setPressed(false);
+                        client.options.jumpKey.setPressed(false);
+                        walkStuckTicks = 0;
+                        state = State.SCANNING;
+                    }
+                } else {
+                    walkStuckTicks = 0;
+                    client.options.jumpKey.setPressed(false);
+                }
+                lastWalkPos = walkPos;
+            }
 
- case NAVIGATING -> {
- navigator.tick(client);
- if (navigator.hasArrived()) {
- navigator.reset(client);
- firstTarget = true;
- current = null;
- state = State.SCANNING;
- AutoTreeFeller.LOGGER.info("[ATF] Arrived at next tree, starting break");
- return;
- }
- if (navigator.isIdle() && navigator.hasSearched()) {
- state = State.IDLE;
- AutoTreeFeller.LOGGER.info("[ATF] No more trees found");
- }
- }
+            // ── THROWING ─────────────────────────────────────────────────
+            case THROWING -> {
+                if (throwHoldTicks > 0) {
+                    throwHoldTicks++;
+                    if (throwHoldTicks <= 3) {
+                        client.options.useKey.setPressed(true);
+                        return;
+                    }
+                    client.options.useKey.setPressed(false);
+                    throwHoldTicks = 0;
+                    AutoTreeFeller.LOGGER.info("[ATF] Threw axe at {}", current);
+                    justThrew = true;
+                    throwSettleTimer.reset();
+                    settleTimer.reset();
+                    state = State.SETTLING;
+                    return;
+                }
 
- case IDLE -> {}
- }
- }
+                queue.removeIf(pos -> client.world.getBlockState(pos).isAir());
+                if (queue.isEmpty()) {
+                    BlockScanner.resetNearbyCache();
+                    navigator.reset(client);
+                    navigator.start();
+                    state = State.NAVIGATING;
+                    return;
+                }
 
- // ── helpers ───────────────────────────────────────────────────────────
- private boolean isValidTarget(MinecraftClient client, BlockPos pos) {
- if (pos == null || client.world == null) return false;
- return client.world.getBlockState(pos).getBlock()
- == Blocks.STRIPPED_SPRUCE_WOOD;
- }
+                BlockPos throwTarget = BlockScanner.findOptimalTarget(
+                    client.player, queue, 20.0);
+                if (throwTarget == null) {
+                    BlockScanner.resetNearbyCache();
+                    navigator.reset(client);
+                    navigator.start();
+                    state = State.NAVIGATING;
+                    return;
+                }
 
- private void releaseAll(MinecraftClient client) {
- client.options.attackKey.setPressed(false);
- client.options.jumpKey.setPressed(false);
- client.options.forwardKey.setPressed(false);
- client.options.sprintKey.setPressed(false);
- client.options.useKey.setPressed(false);
- }
+                if (!throwTarget.equals(current)) {
+                    current = throwTarget;
+                    lookHelper.startLookAt(client.player, current);
+                }
+
+                boolean locked = lookHelper.tick(client.player);
+                if (!locked) return;
+
+                Vec3d eyes = client.player.getEyePos();
+                Vec3d toBlock = Vec3d.ofCenter(throwTarget)
+                    .subtract(eyes).normalize();
+                Vec3d lookVec = client.player.getRotationVec(1.0f);
+                if (lookVec.dotProduct(toBlock) < 0.85) return;
+
+                client.options.useKey.setPressed(true);
+                throwHoldTicks = 1;
+            }
+
+            case NAVIGATING -> {
+                navigator.tick(client);
+                if (navigator.hasArrived()) {
+                    navigator.reset(client);
+                    firstTarget = true;
+                    current = null;
+                    consecutiveJumps = 0;
+                    scanFailures = 0;
+                    state = State.SCANNING;
+                    AutoTreeFeller.LOGGER.info(
+                        "[ATF] Arrived at next tree, starting break");
+                    return;
+                }
+                if (navigator.isIdle() && navigator.hasSearched()) {
+                    state = State.IDLE;
+                    AutoTreeFeller.LOGGER.info("[ATF] No more trees found");
+                }
+            }
+
+            case IDLE -> {}
+        }
+    }
+
+    // ── helpers ───────────────────────────────────────────────────────────
+    private boolean isValidTarget(MinecraftClient client, BlockPos pos) {
+        if (pos == null || client.world == null) return false;
+        return client.world.getBlockState(pos).getBlock()
+            == Blocks.STRIPPED_SPRUCE_WOOD;
+    }
+
+    private void releaseAll(MinecraftClient client) {
+        client.options.attackKey.setPressed(false);
+        client.options.jumpKey.setPressed(false);
+        client.options.forwardKey.setPressed(false);
+        client.options.sprintKey.setPressed(false);
+        client.options.useKey.setPressed(false);
+    }
 }
