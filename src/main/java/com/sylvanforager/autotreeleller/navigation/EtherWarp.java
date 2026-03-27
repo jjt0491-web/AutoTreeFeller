@@ -40,8 +40,12 @@ public class EtherWarp {
                 Vec3d toTarget = Vec3d.ofCenter(destination)
                     .subtract(eyes).normalize();
                 Vec3d lookVec = client.player.getRotationVec(1.0f);
-                if (lookVec.dotProduct(toTarget) < 0.92) return false;
+                double dot = lookVec.dotProduct(toTarget);
+                // Slightly relaxed threshold (0.88) so minor jitter doesn't stall aiming
+                if (dot < 0.88) return false;
 
+                com.sylvanforager.autotreeleller.AutoTreeFeller.LOGGER.info(
+                    "[ETHERWARP] Aim locked (dot={}) → SNEAK_HOLD", String.format("%.3f", dot));
                 // start holding sneak
                 client.options.sneakKey.setPressed(true);
                 holdTicks = 0;
@@ -52,6 +56,8 @@ public class EtherWarp {
                 client.options.sneakKey.setPressed(true);
                 holdTicks++;
                 if (holdTicks >= 2) {
+                    com.sylvanforager.autotreeleller.AutoTreeFeller.LOGGER.info(
+                        "[ETHERWARP] SNEAK_HOLD done → USE_PRESS");
                     client.options.useKey.setPressed(true);
                     holdTicks = 0;
                     phase = Phase.USE_PRESS;
@@ -63,6 +69,8 @@ public class EtherWarp {
                 client.options.useKey.setPressed(true);
                 holdTicks++;
                 if (holdTicks >= 2) {
+                    com.sylvanforager.autotreeleller.AutoTreeFeller.LOGGER.info(
+                        "[ETHERWARP] USE_PRESS done → COOLDOWN");
                     client.options.useKey.setPressed(false);
                     client.options.sneakKey.setPressed(false);
                     holdTicks = 0;
@@ -73,6 +81,8 @@ public class EtherWarp {
                 // wait a few ticks for the teleport to register
                 holdTicks++;
                 if (holdTicks >= 5) {
+                    com.sylvanforager.autotreeleller.AutoTreeFeller.LOGGER.info(
+                        "[ETHERWARP] Cooldown done → DONE (teleport complete)");
                     phase = Phase.DONE;
                     target = null;
                     lookHelper.reset();

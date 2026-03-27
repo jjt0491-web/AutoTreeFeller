@@ -66,9 +66,10 @@ public class TreeNavigator {
                 }
                 AutoTreeFeller.LOGGER.info("[NAV] Next tree at {}", nextTree);
 
-                // If the tree is significantly higher, etherwarp to a landing spot first
+                // If the tree is higher, etherwarp to a landing spot first
                 int heightDiff = nextTree.getY() - client.player.getBlockPos().getY();
-                if (heightDiff > 3) {
+                AutoTreeFeller.LOGGER.info("[NAV] Height diff to tree: {}", heightDiff);
+                if (heightDiff > 1) {
                     BlockPos landing = TreeClusterFinder
                         .findEtherwarpLandingSpot(client.player, nextTree);
                     if (landing != null && etherWarp.canEtherwarp(client, landing)) {
@@ -80,6 +81,8 @@ public class TreeNavigator {
                             heightDiff, landing);
                         return;
                     }
+                    AutoTreeFeller.LOGGER.info(
+                        "[NAV] No etherwarp landing found (heightDiff={}), will walk", heightDiff);
                 }
 
                 // Primary strategy: just walk toward the tree
@@ -127,10 +130,35 @@ public class TreeNavigator {
                         client.options.jumpKey.setPressed(true);
                     }
 
-                    // Really stuck → try pathfinding or etherwarp
-                    if (stuckTicks > 30) {
+                    // Really stuck → try etherwarp first if elevated, then pathfinding
+                    if (stuckTicks > 20) {
                         releaseKeys(client);
                         stuckTicks = 0;
+
+                        int hd = nextTree.getY() - client.player.getBlockPos().getY();
+                        if (!triedEtherwarp && hd > 1) {
+                            // Elevated tree — etherwarp first (wall ahead likely)
+                            BlockPos landing = TreeClusterFinder
+                                .findEtherwarpLandingSpot(client.player, nextTree);
+                            if (landing != null && etherWarp.canEtherwarp(client, landing)) {
+                                triedEtherwarp = true;
+                                etherWarpTarget = landing;
+                                state = NavState.ETHERWARPING;
+                                AutoTreeFeller.LOGGER.info(
+                                    "[NAV] Stuck at elevated tree, etherwarping to landing {}",
+                                    landing);
+                                return;
+                            }
+                            // Landing spot not found — try direct etherwarp to tree
+                            if (!triedEtherwarp && etherWarp.canEtherwarp(client, nextTree)) {
+                                triedEtherwarp = true;
+                                etherWarpTarget = nextTree;
+                                state = NavState.ETHERWARPING;
+                                AutoTreeFeller.LOGGER.info(
+                                    "[NAV] Stuck at elevated tree, etherwarping direct to tree");
+                                return;
+                            }
+                        }
 
                         if (!triedPathfinding) {
                             triedPathfinding = true;
@@ -140,7 +168,7 @@ public class TreeNavigator {
                             triedEtherwarp = true;
                             etherWarpTarget = nextTree;
                             state = NavState.ETHERWARPING;
-                            AutoTreeFeller.LOGGER.info("[NAV] Stuck again, trying etherwarp");
+                            AutoTreeFeller.LOGGER.info("[NAV] Stuck, trying flat etherwarp");
                         } else {
                             AutoTreeFeller.LOGGER.warn("[NAV] All navigation failed, giving up");
                             state = NavState.IDLE;

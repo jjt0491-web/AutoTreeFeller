@@ -88,37 +88,68 @@ public class TreeClusterFinder {
 
     /**
      * Find a solid block with 2 air above near the tree — suitable for etherwarp landing.
-     * Prefers blocks 1-5 blocks from tree center, closest to the player.
+     * Scores candidates by proximity to tree and distance from player.
+     * Adds slight random variation for human-like behavior.
+     * Logs all candidates found.
      */
     public static BlockPos findEtherwarpLandingSpot(ClientPlayerEntity player,
         BlockPos tree) {
         MinecraftClient client = MinecraftClient.getInstance();
-        BlockPos best = null;
-        double bestDist = Double.MAX_VALUE;
+        com.sylvanforager.autotreeleller.AutoTreeFeller.LOGGER.info(
+            "[ETHERWARP] Searching landing spot near tree {} (player at {})",
+            tree, player.getBlockPos());
 
-        for (int x = -5; x <= 5; x++) {
-            for (int z = -5; z <= 5; z++) {
-                for (int y = -3; y <= 3; y++) {
+        java.util.List<BlockPos> candidates = new java.util.ArrayList<>();
+
+        // Wide search: ±8 XZ, ±5 Y around tree centroid
+        for (int x = -8; x <= 8; x++) {
+            for (int z = -8; z <= 8; z++) {
+                for (int y = -5; y <= 5; y++) {
                     BlockPos check = tree.add(x, y, z);
+                    // Block must be solid
                     if (client.world.getBlockState(check).isAir()) continue;
+                    // Must have 2 air above (player standing space)
                     if (!client.world.getBlockState(check.up()).isAir()) continue;
                     if (!client.world.getBlockState(check.up(2)).isAir()) continue;
 
                     double treeDist = Math.sqrt(
                         Math.pow(check.getX() - tree.getX(), 2) +
                         Math.pow(check.getZ() - tree.getZ(), 2));
-                    if (treeDist < 1.0 || treeDist > 5.0) continue;
+                    // Allow 0-6 blocks from tree center (was 1-5, too narrow)
+                    if (treeDist > 6.0) continue;
 
-                    double playerDist = Math.sqrt(
-                        Math.pow(check.getX() - player.getX(), 2) +
-                        Math.pow(check.getZ() - player.getZ(), 2));
-                    if (playerDist < bestDist) {
-                        bestDist = playerDist;
-                        best = check;
-                    }
+                    candidates.add(check);
                 }
             }
         }
+
+        com.sylvanforager.autotreeleller.AutoTreeFeller.LOGGER.info(
+            "[ETHERWARP] Found {} candidate landing spots", candidates.size());
+
+        if (candidates.isEmpty()) return null;
+
+        // Score: lower is better. Base = treeDist*0.4 + playerDist*0.6
+        // Add small random jitter (±0.3) for human variation
+        java.util.Random rng = new java.util.Random();
+        BlockPos best = null;
+        double bestScore = Double.MAX_VALUE;
+        for (BlockPos c : candidates) {
+            double treeDist = Math.sqrt(
+                Math.pow(c.getX() - tree.getX(), 2) +
+                Math.pow(c.getZ() - tree.getZ(), 2));
+            double playerDist = Math.sqrt(
+                Math.pow(c.getX() - player.getX(), 2) +
+                Math.pow(c.getZ() - player.getZ(), 2));
+            double score = treeDist * 0.4 + playerDist * 0.6 + rng.nextDouble() * 0.6;
+            if (score < bestScore) {
+                bestScore = score;
+                best = c;
+            }
+        }
+
+        com.sylvanforager.autotreeleller.AutoTreeFeller.LOGGER.info(
+            "[ETHERWARP] Selected landing spot {} (score={})", best,
+            String.format("%.2f", bestScore));
         return best;
     }
 
