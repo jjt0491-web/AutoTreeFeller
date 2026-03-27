@@ -19,7 +19,7 @@ public class BreakSequencer {
     public enum State {
         IDLE, SCANNING, TURNING, BREAKING,
         SETTLING, JUMPING, WAITING_FOR_APEX,
-        WALKING, THROWING, NAVIGATING
+        WALKING, REPOSITIONING, THROWING, NAVIGATING
     }
 
     private State state = State.IDLE;
@@ -35,6 +35,9 @@ public class BreakSequencer {
     private int throwHoldTicks = 0;
     private int walkStuckTicks = 0;
     private BlockPos lastWalkPos = null;
+    private int repositionAttempts = 0;
+    private int strafeTicks = 0;
+    private boolean strafeRight = false;
 
     // ── Escape counters ──────────────────────────────────────────────────
     private int consecutiveJumps = 0;
@@ -62,6 +65,8 @@ public class BreakSequencer {
             jumpCooldown = 0;
             jumpAttempts = 0;
             consecutiveJumps = 0;
+            repositionAttempts = 0;
+            strafeTicks = 0;
             lastJumpTarget = null;
             breakHoldTicks = 0;
             queue.clear();
@@ -139,23 +144,26 @@ public class BreakSequencer {
                 }
 
                 // ── Blocks exist but none in reach — decide action ────────
-                // Priority: walk > jump (only if blocks above) > navigate
+                // Priority: walk > jump > reposition (strafe around) > navigate
 
-                // 1. Try walking toward nearest block
+                // 1. Try walking toward nearest block (with or without LOS)
                 BlockPos nearest = BlockScanner.findNearest(client.player, 20.0);
-                if (nearest != null) {
-                    double xzDist = Math.sqrt(
-                        Math.pow(nearest.getX() - client.player.getX(), 2) +
-                        Math.pow(nearest.getZ() - client.player.getZ(), 2));
+                BlockPos nearestAny = findNearestNoLOS(client, 20.0);
+                BlockPos walkTarget = nearest != null ? nearest : nearestAny;
 
-                    if (xzDist > 1.5) {
+                if (walkTarget != null) {
+                    double xzDist = Math.sqrt(
+                        Math.pow(walkTarget.getX() - client.player.getX(), 2) +
+                        Math.pow(walkTarget.getZ() - client.player.getZ(), 2));
+
+                    if (xzDist > 3.0) {
                         // Blocks are horizontally distant — walk toward them
                         state = State.WALKING;
                         return;
                     }
 
                     // 2. Blocks are close horizontally but above — jump
-                    if (nearest.getY() > client.player.getBlockPos().getY() + 1
+                    if (walkTarget.getY() > client.player.getBlockPos().getY() + 1
                             && consecutiveJumps < MAX_CONSECUTIVE_JUMPS
                             && client.player.isOnGround() && jumpCooldown == 0) {
                         BlockPos jumpTarget = BlockScanner.findOptimalTarget(
@@ -167,9 +175,23 @@ public class BreakSequencer {
                         state = State.JUMPING;
                         return;
                     }
+
+                    // 3. Blocks close but no LOS — walk around (strafe) to get a new angle
+                    if (nearestAny != null && nearest == null
+                            && repositionAttempts < 4) {
+                        repositionAttempts++;
+                        strafeRight = repositionAttempts % 2 == 0;
+                        strafeTicks = 0;
+                        state = State.REPOSITIONING;
+                        AutoTreeFeller.LOGGER.info(
+                            "[ATF] No LOS, repositioning attempt {} ({})",
+                            repositionAttempts, strafeRight ? "right" : "left");
+                        return;
+                    }
                 }
 
-                // 3. Exhausted walk/jump options — navigate to next tree
+                // 4. Exhausted walk/jump/reposition options — navigate to next tree
+                repositionAttempts = 0;
                 BlockScanner.resetNearbyCache();
                 goNavigate(client, "Blocks unreachable, moving on");
             }
@@ -415,29 +437,94 @@ public class BreakSequencer {
                     return;
                 }
 
-                // Face target and walk
+                // Face target and walk (faster turn)
                 float targetYaw = (float)(Math.toDegrees(Math.atan2(-dx, dz)));
                 float currentYaw = client.player.getYaw();
                 float yawDelta = targetYaw - currentYaw;
                 while (yawDelta > 180) yawDelta -= 360;
                 while (yawDelta < -180) yawDelta += 360;
-                client.player.setYaw(currentYaw + yawDelta * 0.35f);
+                client.player.setYaw(currentYaw + yawDelta * 0.5f);
 
                 client.options.forwardKey.setPressed(true);
                 client.options.sprintKey.setPressed(true);
 
-                // Stuck detection
+                // Stuck detection — jump aggressively at walls
                 BlockPos walkPos = client.player.getBlockPos();
                 if (walkPos.equals(lastWalkPos)) {
                     walkStuckTicks++;
-                    if (walkStuckTicks > 12) {
+                    if (walkStuckTicks > 5 && client.player.isOnGround()) {
                         client.options.jumpKey.setPressed(true);
                     }
-                    if (walkStuckTicks > 35) {
+                    if (walkStuckTicks > 40) {
                         // Can't walk there — go back to scanning
                         releaseAll(client);
                         walkStuckTicks = 0;
                         state = State.SCANNING;
+                    }
+                } else {
+                    walkStuckTicks = 0;
+                    client.options.jumpKey.setPressed(false);
+                }
+                lastWalkPos = walkPos;
+            }
+
+            // ── REPOSITIONING (walk around tree for LOS) ─────────────────
+            case REPOSITIONING -> {
+                strafeTicks++;
+
+                // Check if we now have reachable blocks
+                queue.removeIf(pos -> client.world.getBlockState(pos).isAir());
+                if (!queue.isEmpty()) {
+                    BlockPos reachable = BlockScanner.findOptimalTarget(
+                        client.player, queue, REACH);
+                    if (reachable != null) {
+                        releaseAll(client);
+                        strafeTicks = 0;
+                        state = State.SCANNING;
+                        return;
+                    }
+                }
+
+                // Timeout — go back to scanning to re-evaluate
+                if (strafeTicks > 30) {
+                    releaseAll(client);
+                    strafeTicks = 0;
+                    state = State.SCANNING;
+                    return;
+                }
+
+                // Walk perpendicular to tree (strafe around it)
+                BlockPos nearBlock = findNearestNoLOS(client, 20.0);
+                if (nearBlock == null) {
+                    releaseAll(client);
+                    strafeTicks = 0;
+                    state = State.SCANNING;
+                    return;
+                }
+
+                double dx = (nearBlock.getX() + 0.5) - client.player.getX();
+                double dz = (nearBlock.getZ() + 0.5) - client.player.getZ();
+
+                // Calculate perpendicular direction (90° from tree direction)
+                double perpX = strafeRight ? -dz : dz;
+                double perpZ = strafeRight ? dx : -dx;
+                float strafeYaw = (float)(Math.toDegrees(Math.atan2(-perpX, perpZ)));
+
+                float currentYaw = client.player.getYaw();
+                float yawDelta = strafeYaw - currentYaw;
+                while (yawDelta > 180) yawDelta -= 360;
+                while (yawDelta < -180) yawDelta += 360;
+                client.player.setYaw(currentYaw + yawDelta * 0.5f);
+
+                client.options.forwardKey.setPressed(true);
+                client.options.sprintKey.setPressed(false); // walk, don't sprint
+
+                // Jump over obstacles if stuck
+                BlockPos walkPos = client.player.getBlockPos();
+                if (walkPos.equals(lastWalkPos)) {
+                    walkStuckTicks++;
+                    if (walkStuckTicks > 5 && client.player.isOnGround()) {
+                        client.options.jumpKey.setPressed(true);
                     }
                 } else {
                     walkStuckTicks = 0;
@@ -504,6 +591,7 @@ public class BreakSequencer {
                     firstTarget = true;
                     current = null;
                     consecutiveJumps = 0;
+                    repositionAttempts = 0;
                     state = State.SCANNING;
                     AutoTreeFeller.LOGGER.info(
                         "[ATF] Arrived at next tree, starting break");
@@ -528,7 +616,35 @@ public class BreakSequencer {
         navigator.start();
         state = State.NAVIGATING;
         consecutiveJumps = 0;
+        repositionAttempts = 0;
+        strafeTicks = 0;
         AutoTreeFeller.LOGGER.info("[ATF] {} — navigating to next tree", reason);
+    }
+
+    /** Find nearest stripped spruce block, ignoring LOS (for reposition decisions). */
+    private BlockPos findNearestNoLOS(MinecraftClient client, double maxDist) {
+        BlockPos origin = client.player.getBlockPos();
+        BlockPos nearest = null;
+        double nearestDist = Double.MAX_VALUE;
+        int r = (int) Math.ceil(maxDist);
+
+        for (int x = -r; x <= r; x++) {
+            for (int y = -5; y <= 25; y++) {
+                for (int z = -r; z <= r; z++) {
+                    BlockPos check = origin.add(x, y, z);
+                    if (client.world.getBlockState(check).getBlock()
+                        != Blocks.STRIPPED_SPRUCE_WOOD) continue;
+                    double d = client.player.getEyePos()
+                        .distanceTo(Vec3d.ofCenter(check));
+                    if (d > maxDist) continue;
+                    if (d < nearestDist) {
+                        nearestDist = d;
+                        nearest = check;
+                    }
+                }
+            }
+        }
+        return nearest;
     }
 
     private boolean isValidTarget(MinecraftClient client, BlockPos pos) {

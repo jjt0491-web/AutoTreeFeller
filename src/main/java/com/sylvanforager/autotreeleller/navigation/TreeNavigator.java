@@ -66,6 +66,22 @@ public class TreeNavigator {
                 }
                 AutoTreeFeller.LOGGER.info("[NAV] Next tree at {}", nextTree);
 
+                // If the tree is significantly higher, etherwarp to a landing spot first
+                int heightDiff = nextTree.getY() - client.player.getBlockPos().getY();
+                if (heightDiff > 3) {
+                    BlockPos landing = TreeClusterFinder
+                        .findEtherwarpLandingSpot(client.player, nextTree);
+                    if (landing != null && etherWarp.canEtherwarp(client, landing)) {
+                        etherWarpTarget = landing;
+                        triedEtherwarp = true;
+                        state = NavState.ETHERWARPING;
+                        AutoTreeFeller.LOGGER.info(
+                            "[NAV] Tree is {} blocks above, etherwarping to landing {}",
+                            heightDiff, landing);
+                        return;
+                    }
+                }
+
                 // Primary strategy: just walk toward the tree
                 walkTicks = 0;
                 stuckTicks = 0;
@@ -106,13 +122,13 @@ public class TreeNavigator {
                 if (currentPos.equals(lastPos)) {
                     stuckTicks++;
 
-                    // Jump over obstacles
-                    if (stuckTicks > 12 && client.player.isOnGround()) {
+                    // Jump over obstacles aggressively — start early, keep jumping
+                    if (stuckTicks > 5 && client.player.isOnGround()) {
                         client.options.jumpKey.setPressed(true);
                     }
 
                     // Really stuck → try pathfinding or etherwarp
-                    if (stuckTicks > 40) {
+                    if (stuckTicks > 30) {
                         releaseKeys(client);
                         stuckTicks = 0;
 
@@ -137,7 +153,7 @@ public class TreeNavigator {
                 }
                 lastPos = currentPos;
 
-                // Face the tree and walk
+                // Face the tree and walk (fast turn)
                 double dx = (nextTree.getX() + 0.5) - client.player.getX();
                 double dz = (nextTree.getZ() + 0.5) - client.player.getZ();
                 float targetYaw = (float)(Math.toDegrees(Math.atan2(-dx, dz)));
@@ -145,7 +161,7 @@ public class TreeNavigator {
                 float yawDelta = targetYaw - currentYaw;
                 while (yawDelta > 180) yawDelta -= 360;
                 while (yawDelta < -180) yawDelta += 360;
-                client.player.setYaw(currentYaw + yawDelta * 0.4f);
+                client.player.setYaw(currentYaw + yawDelta * 0.6f);
 
                 client.options.forwardKey.setPressed(true);
                 client.options.sprintKey.setPressed(true);
@@ -263,7 +279,7 @@ public class TreeNavigator {
                 float yawDelta = targetYaw - currentYaw;
                 while (yawDelta > 180) yawDelta -= 360;
                 while (yawDelta < -180) yawDelta += 360;
-                client.player.setYaw(currentYaw + yawDelta * 0.4f);
+                client.player.setYaw(currentYaw + yawDelta * 0.6f);
 
                 if (waypoint.getY() > client.player.getBlockY()
                     && client.player.isOnGround()) {

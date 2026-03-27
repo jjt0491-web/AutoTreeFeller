@@ -86,24 +86,58 @@ public class TreeClusterFinder {
         return centroids;
     }
 
+    /**
+     * Find a solid block with 2 air above near the tree — suitable for etherwarp landing.
+     * Prefers blocks 1-5 blocks from tree center, closest to the player.
+     */
+    public static BlockPos findEtherwarpLandingSpot(ClientPlayerEntity player,
+        BlockPos tree) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        BlockPos best = null;
+        double bestDist = Double.MAX_VALUE;
+
+        for (int x = -5; x <= 5; x++) {
+            for (int z = -5; z <= 5; z++) {
+                for (int y = -3; y <= 3; y++) {
+                    BlockPos check = tree.add(x, y, z);
+                    if (client.world.getBlockState(check).isAir()) continue;
+                    if (!client.world.getBlockState(check.up()).isAir()) continue;
+                    if (!client.world.getBlockState(check.up(2)).isAir()) continue;
+
+                    double treeDist = Math.sqrt(
+                        Math.pow(check.getX() - tree.getX(), 2) +
+                        Math.pow(check.getZ() - tree.getZ(), 2));
+                    if (treeDist < 1.0 || treeDist > 5.0) continue;
+
+                    double playerDist = Math.sqrt(
+                        Math.pow(check.getX() - player.getX(), 2) +
+                        Math.pow(check.getZ() - player.getZ(), 2));
+                    if (playerDist < bestDist) {
+                        bestDist = playerDist;
+                        best = check;
+                    }
+                }
+            }
+        }
+        return best;
+    }
+
     public static List<BlockPos> getWalkableBlocks(ClientPlayerEntity player,
         BlockPos destination) {
         MinecraftClient client = MinecraftClient.getInstance();
         List<BlockPos> walkable = new ArrayList<>();
 
-        // wider margin so pathfinder can route around obstacles
         int minX = Math.min(player.getBlockX(), destination.getX()) - 10;
         int maxX = Math.max(player.getBlockX(), destination.getX()) + 10;
         int minZ = Math.min(player.getBlockZ(), destination.getZ()) - 10;
         int maxZ = Math.max(player.getBlockZ(), destination.getZ()) + 10;
-        int minY = player.getBlockY() - 5;
-        int maxY = player.getBlockY() + 10;
+        int minY = Math.min(player.getBlockY(), destination.getY()) - 5;
+        int maxY = Math.max(player.getBlockY(), destination.getY()) + 10;
 
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
                 for (int z = minZ; z <= maxZ; z++) {
                     BlockPos p = new BlockPos(x, y, z);
-                    // only include solid blocks that have air above (walkable floors)
                     if (!client.world.getBlockState(p).isAir()
                         && client.world.getBlockState(p.up()).isAir()) {
                         walkable.add(p);
