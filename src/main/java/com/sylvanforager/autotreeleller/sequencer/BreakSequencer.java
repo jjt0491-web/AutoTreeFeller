@@ -30,6 +30,8 @@ public class BreakSequencer {
  private int jumpCooldown = 0;
  private int breakHoldTicks = 0;
  private int preBreakDelay = 0;
+ private int jumpAttempts = 0;
+ private BlockPos lastJumpTarget = null;
 
  private static final int MAX_HOLD_TICKS = 40;
  private static final double REACH = 4.5;
@@ -50,6 +52,8 @@ public class BreakSequencer {
  justThrew = false;
  jumpTicks = 0;
  jumpCooldown = 0;
+ jumpAttempts = 0;
+ lastJumpTarget = null;
  breakHoldTicks = 0;
  queue.clear();
  lookHelper.reset();
@@ -200,7 +204,7 @@ public class BreakSequencer {
  Vec3d eyes = client.player.getEyePos();
  Vec3d toBlock = Vec3d.ofCenter(current).subtract(eyes).normalize();
  Vec3d lookVec = client.player.getRotationVec(1.0f);
- if (lookVec.dotProduct(toBlock) < 0.94) {
+ if (lookVec.dotProduct(toBlock) < 0.85) {
  client.options.attackKey.setPressed(false);
  breakHoldTicks = 0;
  state = State.TURNING;
@@ -250,6 +254,21 @@ public class BreakSequencer {
 
  // ── JUMPING ──────────────────────────────────────────────────
  case JUMPING -> {
+ // Stall detector — skip block if stuck jumping too many times
+ if (current != null && current.equals(lastJumpTarget)) {
+ jumpAttempts++;
+ if (jumpAttempts >= 3) {
+ jumpAttempts = 0;
+ lastJumpTarget = null;
+ queue.removeIf(pos -> pos.equals(current));
+ state = State.SCANNING;
+ return;
+ }
+ } else {
+ jumpAttempts = 0;
+ lastJumpTarget = current;
+ }
+
  client.options.jumpKey.setPressed(true);
  jumpTicks = 0;
  jumpCooldown = 8;
@@ -307,7 +326,7 @@ public class BreakSequencer {
  .subtract(eyes).normalize();
  Vec3d lookVec = client.player.getRotationVec(1.0f);
 
- if (dist <= 5.5 && lookVec.dotProduct(toBlock) >= 0.92
+ if (dist <= 5.5 && lookVec.dotProduct(toBlock) >= 0.85
  && isValidTarget(client, current)) {
  client.options.attackKey.setPressed(true);
  client.player.swingHand(Hand.MAIN_HAND);
@@ -389,7 +408,7 @@ public class BreakSequencer {
  Vec3d toBlock = Vec3d.ofCenter(throwTarget)
  .subtract(eyes).normalize();
  Vec3d lookVec = client.player.getRotationVec(1.0f);
- if (lookVec.dotProduct(toBlock) < 0.92) return;
+ if (lookVec.dotProduct(toBlock) < 0.85) return;
 
  // simulate right-click to throw axe
  client.options.useKey.setPressed(true);
