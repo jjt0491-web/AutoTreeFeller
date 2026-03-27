@@ -18,10 +18,13 @@ public class TreeNavigator {
     private List<BlockPos> path = null;
     private int pathIndex = 0;
     private int stuckTicks = 0;
+    private int totalWalkTicks = 0;
+    private static final int MAX_WALK_TICKS = 200; // ~10 seconds
     private BlockPos lastPos = null;
     private boolean searched = false;
 
     private final EtherWarp etherWarp = new EtherWarp();
+    private boolean etherwarpFailed = false;
 
     public boolean isIdle() { return state == NavState.IDLE; }
     public boolean hasSearched() { return searched; }
@@ -37,7 +40,9 @@ public class TreeNavigator {
         path = null;
         pathIndex = 0;
         stuckTicks = 0;
+        totalWalkTicks = 0;
         searched = false;
+        etherwarpFailed = false;
         etherWarp.reset();
         releaseKeys(client);
     }
@@ -57,7 +62,7 @@ public class TreeNavigator {
                 }
                 AutoTreeFeller.LOGGER.info("[NAV] Next tree at {}", nextTree);
 
-                if (etherWarp.canEtherwarp(client, nextTree)) {
+                if (!etherwarpFailed && etherWarp.canEtherwarp(client, nextTree)) {
                     etherWarpTarget = nextTree;
                     state = NavState.ETHERWARPING;
                 } else {
@@ -68,14 +73,16 @@ public class TreeNavigator {
             case ETHERWARPING -> {
                 boolean done = etherWarp.tick(client, etherWarpTarget);
                 if (done) {
-                    AutoTreeFeller.LOGGER.info("[NAV] Etherwarped to tree");
                     double dist = Math.sqrt(
                         Math.pow(client.player.getX() - nextTree.getX(), 2) +
                         Math.pow(client.player.getY() - nextTree.getY(), 2) +
                         Math.pow(client.player.getZ() - nextTree.getZ(), 2));
                     if (dist <= 5.0) {
+                        AutoTreeFeller.LOGGER.info("[NAV] Etherwarped to tree");
                         state = NavState.ARRIVED;
                     } else {
+                        AutoTreeFeller.LOGGER.info("[NAV] Etherwarp didn't reach tree (dist={}), falling back to pathfinding", String.format("%.1f", dist));
+                        etherwarpFailed = true;
                         state = NavState.PATHFINDING;
                     }
                 }
@@ -83,14 +90,23 @@ public class TreeNavigator {
 
             case PATHFINDING -> {
                 BlockPos start = client.player.getBlockPos();
-                BlockPos goal = nextTree.add(2, 0, 0);
 
                 List<BlockPos> walkable = TreeClusterFinder
-                    .getWalkableBlocks(client.player, goal);
+                    .getWalkableBlocks(client.player, nextTree);
+
+                // find the nearest walkable position around the tree
+                BlockPos goal = findNearestWalkableGoal(
+                    walkable, nextTree, start);
+                if (goal == null) goal = nextTree.add(2, 0, 0);
 
                 path = PathfindingBridge.computePath(walkable, start, goal);
 
                 if (path == null || path.isEmpty()) {
+                    if (etherwarpFailed) {
+                        AutoTreeFeller.LOGGER.warn("[NAV] No path and etherwarp failed, giving up");
+                        state = NavState.IDLE;
+                        return;
+                    }
                     AutoTreeFeller.LOGGER.warn("[NAV] No path found, trying etherwarp");
                     state = NavState.ETHERWARPING;
                     etherWarpTarget = nextTree;
@@ -105,6 +121,14 @@ public class TreeNavigator {
             }
 
             case WALKING_PATH -> {
+                totalWalkTicks++;
+                if (totalWalkTicks > MAX_WALK_TICKS) {
+                    AutoTreeFeller.LOGGER.warn("[NAV] Walk timeout, giving up");
+                    releaseKeys(client);
+                    state = NavState.IDLE;
+                    return;
+                }
+
                 if (path == null || pathIndex >= path.size()) {
                     releaseKeys(client);
                     state = NavState.ARRIVED;
@@ -166,6 +190,31 @@ public class TreeNavigator {
                 releaseKeys(client);
             }
         }
+    }
+
+    private BlockPos findNearestWalkableGoal(List<BlockPos> walkable,
+        BlockPos tree, BlockPos playerPos) {
+        // find a walkable spot within 3 blocks of the tree, closest to player
+        BlockPos best = null;
+        double bestDist = Double.MAX_VALUE;
+        for (BlockPos w : walkable) {
+            // check this is a floor block with air above it
+            double treeDist = Math.sqrt(
+                Math.pow(w.getX() - tree.getX(), 2) +
+                Math.pow(w.getZ() - tree.getZ(), 2));
+            if (treeDist > 4.0 || treeDist < 1.0) continue;
+            if (Math.abs(w.getY() - tree.getY()) > 2) continue;
+            // the walkable position is on top of this block
+            BlockPos standing = w.up();
+            double playerDist = Math.sqrt(
+                Math.pow(standing.getX() - playerPos.getX(), 2) +
+                Math.pow(standing.getZ() - playerPos.getZ(), 2));
+            if (playerDist < bestDist) {
+                bestDist = playerDist;
+                best = standing;
+            }
+        }
+        return best;
     }
 
     private void releaseKeys(MinecraftClient client) {

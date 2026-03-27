@@ -91,10 +91,11 @@ public class TreeClusterFinder {
         MinecraftClient client = MinecraftClient.getInstance();
         List<BlockPos> walkable = new ArrayList<>();
 
-        int minX = Math.min(player.getBlockX(), destination.getX()) - 5;
-        int maxX = Math.max(player.getBlockX(), destination.getX()) + 5;
-        int minZ = Math.min(player.getBlockZ(), destination.getZ()) - 5;
-        int maxZ = Math.max(player.getBlockZ(), destination.getZ()) + 5;
+        // wider margin so pathfinder can route around obstacles
+        int minX = Math.min(player.getBlockX(), destination.getX()) - 10;
+        int maxX = Math.max(player.getBlockX(), destination.getX()) + 10;
+        int minZ = Math.min(player.getBlockZ(), destination.getZ()) - 10;
+        int maxZ = Math.max(player.getBlockZ(), destination.getZ()) + 10;
         int minY = player.getBlockY() - 5;
         int maxY = player.getBlockY() + 10;
 
@@ -102,7 +103,9 @@ public class TreeClusterFinder {
             for (int y = minY; y <= maxY; y++) {
                 for (int z = minZ; z <= maxZ; z++) {
                     BlockPos p = new BlockPos(x, y, z);
-                    if (!client.world.getBlockState(p).isAir()) {
+                    // only include solid blocks that have air above (walkable floors)
+                    if (!client.world.getBlockState(p).isAir()
+                        && client.world.getBlockState(p.up()).isAir()) {
                         walkable.add(p);
                     }
                 }

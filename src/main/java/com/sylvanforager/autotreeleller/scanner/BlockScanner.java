@@ -9,6 +9,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
 import java.util.*;
+import java.util.Map;
+import java.util.HashMap;
 
 public class BlockScanner {
  private static final int HORIZONTAL_RADIUS = 8;
@@ -32,14 +34,21 @@ public class BlockScanner {
  }
  }
 
+ // pre-compute LOS to avoid raycasts inside comparator
+ Map<BlockPos, Boolean> losCache = new HashMap<>();
+ Vec3d eyePos = player.getEyePos();
+ for (BlockPos b : blocks) {
+ losCache.put(b, hasLineOfSight(player, b));
+ }
+
  blocks.sort((a, b) -> {
- boolean aVis = hasLineOfSight(player, a);
- boolean bVis = hasLineOfSight(player, b);
+ boolean aVis = losCache.getOrDefault(a, false);
+ boolean bVis = losCache.getOrDefault(b, false);
  if (aVis && !bVis) return -1;
  if (!aVis && bVis) return 1;
  if (a.getY() != b.getY()) return Integer.compare(a.getY(), b.getY());
- double da = player.getEyePos().squaredDistanceTo(Vec3d.ofCenter(a));
- double db = player.getEyePos().squaredDistanceTo(Vec3d.ofCenter(b));
+ double da = eyePos.squaredDistanceTo(Vec3d.ofCenter(a));
+ double db = eyePos.squaredDistanceTo(Vec3d.ofCenter(b));
  return Double.compare(da, db);
  });
 
@@ -69,24 +78,23 @@ public class BlockScanner {
  }
  }
 
- if (candidates.isEmpty()) return findNearest(player, maxDist);
+ if (candidates.isEmpty()) return null;
+ if (candidates.size() == 1) return candidates.get(0);
 
+ // O(n) scoring: prefer lowest Y, closest distance, with neighbor density bonus
+ Vec3d eyePos = player.getEyePos();
  BlockPos best = null;
- int bestScore = -1;
+ double bestScore = Double.MAX_VALUE;
  for (BlockPos candidate : candidates) {
- int score = 0;
- for (BlockPos other : candidates) {
- if (!other.equals(candidate)
- && candidate.getSquaredDistance(other) <= 16) {
- score++;
- }
- }
- if (score > bestScore) {
+ double dist = eyePos.squaredDistanceTo(Vec3d.ofCenter(candidate));
+ // lower Y is better (break bottom-up), closer is better
+ double score = dist + candidate.getY() * 3.0;
+ if (score < bestScore) {
  bestScore = score;
  best = candidate;
  }
  }
- return best != null ? best : candidates.get(0);
+ return best;
  }
 
  public static BlockPos findNearest(ClientPlayerEntity player, double maxDist) {
@@ -116,7 +124,21 @@ public class BlockScanner {
  return nearest;
  }
 
+ private static boolean cachedHasNearby = false;
+ private static int nearbyCheckCooldown = 0;
+
+ public static void resetNearbyCache() {
+ nearbyCheckCooldown = 0;
+ }
+
  public static boolean hasAnyNearby(ClientPlayerEntity player, double radius) {
+ // only re-scan every 10 ticks (~0.5s) to avoid 52K block checks per tick
+ if (nearbyCheckCooldown > 0) {
+ nearbyCheckCooldown--;
+ return cachedHasNearby;
+ }
+ nearbyCheckCooldown = 10;
+
  BlockPos origin = player.getBlockPos();
  int r = (int) Math.ceil(radius);
  MinecraftClient client = MinecraftClient.getInstance();
@@ -125,11 +147,13 @@ public class BlockScanner {
  for (int z = -r; z <= r; z++) {
  if (client.world.getBlockState(origin.add(x, y, z))
  .getBlock() == Blocks.STRIPPED_SPRUCE_WOOD) {
+ cachedHasNearby = true;
  return true;
  }
  }
  }
  }
+ cachedHasNearby = false;
  return false;
  }
 

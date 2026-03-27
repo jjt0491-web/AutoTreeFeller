@@ -33,6 +33,9 @@ public class BreakSequencer {
  private int preBreakDelay = 0;
  private int jumpAttempts = 0;
  private BlockPos lastJumpTarget = null;
+ private int throwHoldTicks = 0;
+ private int walkStuckTicks = 0;
+ private BlockPos lastWalkPos = null;
 
  private static final int MAX_HOLD_TICKS = 40;
  private static final double REACH = 4.5;
@@ -91,12 +94,17 @@ public class BreakSequencer {
  queue.removeIf(pos -> client.world.getBlockState(pos).isAir());
  }
 
- // stop if no tree nearby (walked away)
+ // stop if no tree nearby (walked away) — transition to navigation
  if (state != State.IDLE && state != State.WALKING
  && state != State.THROWING && state != State.SCANNING
  && state != State.NAVIGATING) {
  if (!BlockScanner.hasAnyNearby(client.player, 20.0)) {
  releaseAll(client);
+ queue.clear();
+ navigator.reset(client);
+ navigator.start();
+ state = State.NAVIGATING;
+ AutoTreeFeller.LOGGER.info("[ATF] No blocks nearby, navigating to next tree");
  return;
  }
  }
@@ -359,10 +367,24 @@ public class BreakSequencer {
  // ── WALKING ──────────────────────────────────────────────────
  case WALKING -> {
  queue.removeIf(pos -> client.world.getBlockState(pos).isAir());
- if (queue.isEmpty()) { state = State.IDLE; return; }
+ if (queue.isEmpty()) {
+ client.options.forwardKey.setPressed(false);
+ client.options.sprintKey.setPressed(false);
+ navigator.reset(client);
+ navigator.start();
+ state = State.NAVIGATING;
+ return;
+ }
 
  BlockPos target = BlockScanner.findNearest(client.player, 20.0);
- if (target == null) { state = State.IDLE; return; }
+ if (target == null) {
+ client.options.forwardKey.setPressed(false);
+ client.options.sprintKey.setPressed(false);
+ navigator.reset(client);
+ navigator.start();
+ state = State.NAVIGATING;
+ return;
+ }
 
  double dx = (target.getX() + 0.5) - client.player.getX();
  double dz = (target.getZ() + 0.5) - client.player.getZ();
@@ -397,16 +419,65 @@ public class BreakSequencer {
 
  client.options.forwardKey.setPressed(true);
  client.options.sprintKey.setPressed(true);
+
+ // stuck detection — jump if not moving, give up after too long
+ BlockPos walkPos = client.player.getBlockPos();
+ if (walkPos.equals(lastWalkPos)) {
+ walkStuckTicks++;
+ if (walkStuckTicks > 15) {
+ client.options.jumpKey.setPressed(true);
+ }
+ if (walkStuckTicks > 40) {
+ // truly stuck — give up walking, try jumping to break
+ client.options.forwardKey.setPressed(false);
+ client.options.sprintKey.setPressed(false);
+ client.options.jumpKey.setPressed(false);
+ walkStuckTicks = 0;
+ state = State.SCANNING;
+ }
+ } else {
+ walkStuckTicks = 0;
+ client.options.jumpKey.setPressed(false);
+ }
+ lastWalkPos = walkPos;
  }
 
  // ── THROWING ─────────────────────────────────────────────────
  case THROWING -> {
+ // hold phase — keep use key pressed for 2 ticks then release
+ if (throwHoldTicks > 0) {
+ throwHoldTicks++;
+ if (throwHoldTicks <= 3) {
+ client.options.useKey.setPressed(true);
+ return;
+ }
+ // release and settle
+ client.options.useKey.setPressed(false);
+ throwHoldTicks = 0;
+ AutoTreeFeller.LOGGER.info("[ATF] Threw axe at {}", current);
+ justThrew = true;
+ throwSettleTimer.reset();
+ settleTimer.reset();
+ state = State.SETTLING;
+ return;
+ }
+
  queue.removeIf(pos -> client.world.getBlockState(pos).isAir());
- if (queue.isEmpty()) { state = State.IDLE; return; }
+ if (queue.isEmpty()) {
+ navigator.reset(client);
+ navigator.start();
+ state = State.NAVIGATING;
+ return;
+ }
 
  BlockPos throwTarget = BlockScanner.findOptimalTarget(
  client.player, queue, 20.0);
- if (throwTarget == null) { state = State.IDLE; return; }
+ if (throwTarget == null) {
+ navigator.reset(client);
+ navigator.start();
+ state = State.NAVIGATING;
+ return;
+ }
 
  if (!throwTarget.equals(current)) {
  current = throwTarget;
@@ -422,15 +493,9 @@ public class BreakSequencer {
  Vec3d lookVec = client.player.getRotationVec(1.0f);
  if (lookVec.dotProduct(toBlock) < 0.85) return;
 
- // simulate right-click to throw axe
+ // start holding use key — will release after 3 ticks
  client.options.useKey.setPressed(true);
- client.options.useKey.setPressed(false);
-
- AutoTreeFeller.LOGGER.info("[ATF] Threw axe at {}", throwTarget);
- justThrew = true;
- throwSettleTimer.reset();
- settleTimer.reset();
- state = State.SETTLING;
+ throwHoldTicks = 1;
  }
 
  case NAVIGATING -> {
