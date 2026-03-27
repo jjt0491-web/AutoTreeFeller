@@ -1,0 +1,140 @@
+[13:03:02] [main/INFO] (FabricLoader/GameProvider) Loading Minecraft 1.21.11 with Fabric Loader 0.18.2
+[13:03:02] [main/INFO] (FabricLoader) Loading 5 mods:
+	- auto-tree-feller 1.0.0
+	- fabricloader 0.18.2
+	- java 21
+	- minecraft 1.21.11
+	- mixinextras 0.5.0
+[13:03:02] [main/INFO] (FabricLoader/Mixin) SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/Users/jacob/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.16.5+mixin.0.8.7/80fc3a9f592673cea87f4cd702f87991c6c9fe4d/sponge-mixin-0.16.5+mixin.0.8.7.jar Service=Knot/Fabric Env=CLIENT
+[13:03:02] [main/INFO] (FabricLoader/Mixin) Loaded Fabric development mappings for mixin remapper!
+[13:03:02] [main/INFO] (FabricLoader/Mixin) Compatibility level set to JAVA_17
+[13:03:03] [Datafixer Bootstrap/INFO] (Minecraft) 287 Datafixer optimizations took 505 milliseconds
+[13:03:09] [Render thread/INFO] (FabricLoader/MixinExtras|Service) Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.0).
+[13:03:10] [Render thread/INFO] (Minecraft) Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, profilesHost=https://api.mojang.com, name=PROD]
+[13:03:10] [Render thread/INFO] (Minecraft) Setting user: Player675
+[13:03:10] [Render thread/INFO] (auto-tree-feller) Auto Tree Feller starting...
+[13:03:10] [Render thread/INFO] (auto-tree-feller) Auto Tree Feller initialized
+[13:03:11] [Render thread/INFO] (Minecraft) Backend library: LWJGL version 3.3.3-snapshot
+[13:03:11] [Download-2/ERROR] (Minecraft) Failed to fetch user properties
+com.mojang.authlib.exceptions.InvalidCredentialsException: Status: 401
+	at knot//com.mojang.authlib.exceptions.MinecraftClientHttpException.toAuthenticationException(MinecraftClientHttpException.java:59)
+	at knot//com.mojang.authlib.yggdrasil.YggdrasilUserApiService.fetchProperties(YggdrasilUserApiService.java:150)
+	at knot//net.minecraft.client.MinecraftClient.method_55608(MinecraftClient.java:457)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: com.mojang.authlib.exceptions.MinecraftClientHttpException: Status: 401
+	at knot//com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:103)
+	at knot//com.mojang.authlib.minecraft.client.MinecraftClient.get(MinecraftClient.java:56)
+	at knot//com.mojang.authlib.yggdrasil.YggdrasilUserApiService.fetchProperties(YggdrasilUserApiService.java:121)
+	... 5 more
+[13:03:15] [Render thread/INFO] (Minecraft) Using optional rendering extensions: GL_EXT_texture_filter_anisotropic
+[13:03:16] [Download-1/INFO] (Minecraft) Could not authorize you against Realms server: java.lang.RuntimeException: Failed to parse into SignedJWT: FabricMC
+[13:03:16] [Download-1/ERROR] (Minecraft) Failed to fetch Realms feature flags
+net.minecraft.client.realms.exception.RealmsServiceException: Realms authentication error with message 'java.lang.RuntimeException: Failed to parse into SignedJWT: FabricMC'
+	at knot//net.minecraft.client.realms.RealmsClient.execute(RealmsClient.java:526)
+	at knot//net.minecraft.client.realms.RealmsClient.fetchFeatureFlags(RealmsClient.java:186)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+[13:03:18] [Render thread/INFO] (Minecraft) Reloading ResourceManager: vanilla
+[13:03:18] [Worker-Main-5/INFO] (Minecraft) Found unifont_all_no_pua-17.0.01.hex, loading
+[13:03:18] [Worker-Main-7/INFO] (Minecraft) Found unifont_pua-17.0.01.hex, loading
+[13:03:19] [Worker-Main-5/INFO] (Minecraft) Found unifont_jp_patch-17.0.01.hex, loading
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/entity and FS minecraft:core/entity. Log output: WARNING: Output of vertex shader 'overlayColor' not read by fragment shader
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/rendertype_text_see_through and FS minecraft:core/rendertype_text_see_through. Log output: WARNING: Could not find vertex shader attribute 'UV2' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/rendertype_translucent_moving_block and FS minecraft:core/rendertype_translucent_moving_block. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/animate_sprite and FS minecraft:core/animate_sprite_blit. Log output: WARNING: Output of vertex shader 'fAnimationProgress' not read by fragment shader
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/rendertype_crumbling and FS minecraft:core/rendertype_crumbling. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+WARNING: Output of vertex shader 'texCoord2' not read by fragment shader
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/rendertype_text_intensity_see_through and FS minecraft:core/rendertype_text_intensity_see_through. Log output: WARNING: Could not find vertex shader attribute 'UV2' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/entity and FS minecraft:core/entity. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+WARNING: Could not find vertex shader attribute 'UV2' to match BindAttributeLocation request.
+WARNING: Output of vertex shader 'overlayColor' not read by fragment shader
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/rendertype_beacon_beam and FS minecraft:core/rendertype_beacon_beam. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+WARNING: Could not find vertex shader attribute 'UV2' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/entity and FS minecraft:core/entity. Log output: WARNING: Could not find vertex shader attribute 'UV2' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/terrain and FS minecraft:core/terrain. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/terrain and FS minecraft:core/terrain. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/entity and FS minecraft:core/entity. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+WARNING: Could not find vertex shader attribute 'UV2' to match BindAttributeLocation request.
+WARNING: Output of vertex shader 'overlayColor' not read by fragment shader
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/terrain and FS minecraft:core/terrain. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/entity and FS minecraft:core/entity. Log output: WARNING: Output of vertex shader 'overlayColor' not read by fragment shader
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/terrain and FS minecraft:core/terrain. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/rendertype_entity_shadow and FS minecraft:core/rendertype_entity_shadow. Log output: WARNING: Could not find vertex shader attribute 'UV1' to match BindAttributeLocation request.
+WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+WARNING: Could not find vertex shader attribute 'UV2' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/block and FS minecraft:core/block. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/block and FS minecraft:core/block. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/entity and FS minecraft:core/entity. Log output: WARNING: Output of vertex shader 'overlayColor' not read by fragment shader
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/terrain and FS minecraft:core/terrain. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/block and FS minecraft:core/block. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/rendertype_item_entity_translucent_cull and FS minecraft:core/rendertype_item_entity_translucent_cull. Log output: WARNING: Output of vertex shader 'texCoord1' not read by fragment shader
+WARNING: Output of vertex shader 'texCoord2' not read by fragment shader
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/rendertype_beacon_beam and FS minecraft:core/rendertype_beacon_beam. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+WARNING: Could not find vertex shader attribute 'UV2' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/rendertype_text_background_see_through and FS minecraft:core/rendertype_text_background_see_through. Log output: WARNING: Could not find vertex shader attribute 'UV2' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/rendertype_entity_alpha and FS minecraft:core/rendertype_entity_alpha. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+WARNING: Output of vertex shader 'texCoord1' not read by fragment shader
+WARNING: Output of vertex shader 'texCoord2' not read by fragment shader
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/entity and FS minecraft:core/entity. Log output: WARNING: Output of vertex shader 'overlayColor' not read by fragment shader
+
+[13:03:22] [Render thread/INFO] (Minecraft) Info log when linking program containing VS minecraft:core/entity and FS minecraft:core/entity. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+WARNING: Output of vertex shader 'overlayColor' not read by fragment shader
+
+[13:03:22] [Render thread/INFO] (Minecraft) OpenAL initialized on device MacBook Pro Speakers
+[13:03:22] [Render thread/INFO] (Minecraft) Sound engine started
+[13:03:22] [Render thread/INFO] (Minecraft) Created: 512x256x0 minecraft:textures/atlas/particles.png-atlas
+[13:03:22] [Render thread/INFO] (Minecraft) Created: 128x128x0 minecraft:textures/atlas/decorated_pot.png-atlas
+[13:03:22] [Render thread/INFO] (Minecraft) Created: 2048x1024x0 minecraft:textures/atlas/armor_trims.png-atlas
+[13:03:22] [Render thread/INFO] (Minecraft) Created: 512x256x0 minecraft:textures/atlas/paintings.png-atlas
+[13:03:22] [Render thread/INFO] (Minecraft) Created: 1024x512x0 minecraft:textures/atlas/shield_patterns.png-atlas
+[13:03:22] [Render thread/INFO] (Minecraft) Created: 2048x2048x4 minecraft:textures/atlas/blocks.png-atlas
+[13:03:23] [Render thread/INFO] (Minecraft) Created: 512x512x0 minecraft:textures/atlas/chest.png-atlas
+[13:03:23] [Render thread/INFO] (Minecraft) Created: 256x128x0 minecraft:textures/atlas/celestials.png-atlas
+[13:03:23] [Render thread/INFO] (Minecraft) Created: 1024x512x0 minecraft:textures/atlas/banner_patterns.png-atlas
+[13:03:23] [Render thread/INFO] (Minecraft) Created: 512x512x0 minecraft:textures/atlas/beds.png-atlas
+[13:03:23] [Render thread/INFO] (Minecraft) Created: 1024x512x0 minecraft:textures/atlas/items.png-atlas
+[13:03:23] [Render thread/INFO] (Minecraft) Created: 1024x1024x0 minecraft:textures/atlas/gui.png-atlas
+[13:03:23] [Render thread/INFO] (Minecraft) Created: 128x64x0 minecraft:textures/atlas/map_decorations.png-atlas
+[13:03:23] [Render thread/INFO] (Minecraft) Created: 512x256x0 minecraft:textures/atlas/signs.png-atlas
+[13:03:23] [Render thread/INFO] (Minecraft) Created: 512x512x0 minecraft:textures/atlas/shulker_boxes.png-atlas
+[13:03:49] [IO-Worker-1/INFO] (Minecraft) Could not authorize you against Realms server: java.lang.RuntimeException: Failed to parse into SignedJWT: FabricMC
+[13:03:49] [IO-Worker-1/ERROR] (Minecraft) Couldn't connect to realms
+net.minecraft.client.realms.exception.RealmsServiceException: Realms authentication error with message 'java.lang.RuntimeException: Failed to parse into SignedJWT: FabricMC'
+	at knot//net.minecraft.client.realms.RealmsClient.execute(RealmsClient.java:526)
+	at knot//net.minecraft.client.realms.RealmsClient.clientCompatible(RealmsClient.java:307)
+	at knot//net.minecraft.client.realms.RealmsAvailability.method_52627(RealmsAvailability.java:48)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+[13:03:58] [Render thread/INFO] (Minecraft) Stopping!

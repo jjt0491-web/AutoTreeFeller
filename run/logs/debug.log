@@ -1,0 +1,264 @@
+[13:03:02] [main/INFO] (FabricLoader/GameProvider) Loading Minecraft 1.21.11 with Fabric Loader 0.18.2
+[13:03:02] [main/DEBUG] (FabricLoader/GamePatch) Found game constructor: net.minecraft.client.main.Main -> net.minecraft.client.MinecraftClient
+[13:03:02] [main/DEBUG] (FabricLoader/GamePatch) Patching game constructor <init>(Lnet/minecraft/client/RunArgs;)V
+[13:03:02] [main/DEBUG] (FabricLoader/GamePatch) Run directory field is thought to be net/minecraft/client/MinecraftClient/runDirectory
+[13:03:02] [main/DEBUG] (FabricLoader/GamePatch) Applying brand name hook to net/minecraft/client/ClientBrandRetriever::getClientModName
+[13:03:02] [main/DEBUG] (FabricLoader/GamePatch) Applying brand name hook to net/minecraft/server/MinecraftServer::getServerModName
+[13:03:02] [main/DEBUG] (FabricLoader/GamePatch) Patched 3 classs
+[13:03:02] [main/DEBUG] (FabricLoader/Discovery) Mod discovery time: 17.1 ms
+[13:03:02] [main/DEBUG] (FabricLoader/Resolution) Mod resolution time: 69.7 ms
+[13:03:02] [main/INFO] (FabricLoader) Loading 5 mods:
+	- auto-tree-feller 1.0.0
+	- fabricloader 0.18.2
+	- java 21
+	- minecraft 1.21.11
+	- mixinextras 0.5.0
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/io.github.llamalad7/mixinextras-fabric/0.5.0/91a83dfb7abd320f6236bd1fcf5c0ff143d59a13/mixinextras-fabric-0.5.0.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/Desktop/SylvanForager/AutoTreeFeller/build/resources/main to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Entrypoint) Registering new-style initializer com.sylvanforager.autotreeleller.AutoTreeFeller for mod auto-tree-feller (key client)
+[13:03:02] [main/INFO] (FabricLoader/Mixin) SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/Users/jacob/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.16.5+mixin.0.8.7/80fc3a9f592673cea87f4cd702f87991c6c9fe4d/sponge-mixin-0.16.5+mixin.0.8.7.jar Service=Knot/Fabric Env=CLIENT
+[13:03:02] [main/DEBUG] (FabricLoader/Mixin) Initialising Mixin Platform Manager
+[13:03:02] [main/DEBUG] (FabricLoader/Mixin) Adding mixin platform agents for container ContainerHandleURI(file:///Users/jacob/.gradle/caches/modules-2/files-2.1/net.fabricmc/fabric-loader/0.18.2/1cd44667bd93b74564056eb4867dfd12e38cb262/fabric-loader-0.18.2.jar)
+[13:03:02] [main/DEBUG] (FabricLoader/Mixin) Instancing new MixinPlatformAgentDefault for ContainerHandleURI(file:///Users/jacob/.gradle/caches/modules-2/files-2.1/net.fabricmc/fabric-loader/0.18.2/1cd44667bd93b74564056eb4867dfd12e38cb262/fabric-loader-0.18.2.jar)
+[13:03:02] [main/DEBUG] (FabricLoader/Mixin) MixinPlatformAgentDefault accepted container ContainerHandleURI(file:///Users/jacob/.gradle/caches/modules-2/files-2.1/net.fabricmc/fabric-loader/0.18.2/1cd44667bd93b74564056eb4867dfd12e38cb262/fabric-loader-0.18.2.jar)
+[13:03:02] [main/DEBUG] (FabricLoader/Mixin) Instancing new MixinPlatformAgentDefault for ContainerHandleURI(file:///Users/jacob/.gradle/caches/modules-2/files-2.1/net.fabricmc/fabric-loader/0.18.2/1cd44667bd93b74564056eb4867dfd12e38cb262/fabric-loader-0.18.2.jar)
+[13:03:02] [main/DEBUG] (FabricLoader/Mixin) MixinPlatformAgentDefault accepted container ContainerHandleURI(file:///Users/jacob/.gradle/caches/modules-2/files-2.1/net.fabricmc/fabric-loader/0.18.2/1cd44667bd93b74564056eb4867dfd12e38cb262/fabric-loader-0.18.2.jar)
+[13:03:02] [main/DEBUG] (FabricLoader/Mixin) Processing prepare() for PlatformAgent[MixinPlatformAgentDefault:ContainerHandleURI(file:///Users/jacob/.gradle/caches/modules-2/files-2.1/net.fabricmc/fabric-loader/0.18.2/1cd44667bd93b74564056eb4867dfd12e38cb262/fabric-loader-0.18.2.jar)]
+[13:03:02] [main/DEBUG] (FabricLoader/Mixin) Processing prepare() for PlatformAgent[MixinPlatformAgentDefault:ContainerHandleURI(file:///Users/jacob/.gradle/caches/modules-2/files-2.1/net.fabricmc/fabric-loader/0.18.2/1cd44667bd93b74564056eb4867dfd12e38cb262/fabric-loader-0.18.2.jar)]
+[13:03:02] [main/INFO] (FabricLoader/Mixin) Loaded Fabric development mappings for mixin remapper!
+[13:03:02] [main/DEBUG] (FabricLoader/Mixin) Compatibility level JAVA_17 specified by auto-tree-feller.mixins.json is higher than the maximum level supported by this version of mixin (JAVA_13).
+[13:03:02] [main/INFO] (FabricLoader/Mixin) Compatibility level set to JAVA_17
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/fabric-loom/minecraftMaven/net/minecraft/minecraft-merged/1.21.11-net.fabricmc.yarn.1_21_11.1.21.11+build.4-v2/minecraft-merged-1.21.11-net.fabricmc.yarn.1_21_11.1.21.11+build.4-v2.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/Desktop/SylvanForager/AutoTreeFeller/build/classes/java/main to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/Desktop/SylvanForager/AutoTreeFeller/build/resources/main to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/fabric-loom/1.21.11/net.fabricmc.yarn.1_21_11.1.21.11+build.4-v2/mappings.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/io.github.llamalad7/mixinextras-fabric/0.5.0/91a83dfb7abd320f6236bd1fcf5c0ff143d59a13/mixinextras-fabric-0.5.0.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/net.fabricmc/dev-launch-injector/0.2.1+build.8/da8bef7e6e2f952da707f282bdb46882a0fce5e3/dev-launch-injector-0.2.1+build.8.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/at.yawk.lz4/lz4-java/1.8.1/1f30a180ee04ccd53339a716aec13cae60a013b5/lz4-java-1.8.1.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/ca.weblite/java-objc-bridge/1.1/1227f9e0666314f9de41477e3ec277e542ed7f7b/java-objc-bridge-1.1.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/com.azure/azure-json/1.4.0/fcc1d354dbc3e0300e5276b1bf124d0247799cd8/azure-json-1.4.0.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/com.github.oshi/oshi-core/6.9.0/3224870731860cfcd7744581a05b559e94291e7/oshi-core-6.9.0.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/com.google.guava/failureaccess/1.0.3/aeaffd00d57023a2c947393ed251f0354f0985fc/failureaccess-1.0.3.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/com.google.guava/guava/33.5.0-jre/8699de25f2f979108d6c1b804a7ba38cda1116bc/guava-33.5.0-jre.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/com.ibm.icu/icu4j/77.1/38693cf0b1d7362a8b726af74dc06026a7c23809/icu4j-77.1.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/com.microsoft.azure/msal4j/1.23.1/6c722b514873b24a4e1ce9c22dca36ea3c22bdbe/msal4j-1.23.1.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/com.mojang/blocklist/1.0.10/5c685c5ffa94c4cd39496c7184c1d122e515ecef/blocklist-1.0.10.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/com.mojang/brigadier/1.3.10/d15b53a14cf20fdcaa98f731af5dda654452c010/brigadier-1.3.10.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/com.mojang/datafixerupper/9.0.19/4e91f9712fa1e83231d1501625381b0210a977da/datafixerupper-9.0.19.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/com.mojang/jtracy/1.0.37/a3fb649b2e2b2288d2978f0b0bc3d83f62809d1e/jtracy-1.0.37.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/com.mojang/jtracy/1.0.37/a99fcb63b72fb623534d0ceb71bda4bed9b55b4c/jtracy-1.0.37-natives-macos.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/com.mojang/jtracy/1.0.37/c8e971da5150aa33283c5bf4097154c0da554fb9/jtracy-1.0.37-natives-macos-arm64.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/com.mojang/patchy/2.2.10/da05971b07cbb379d002cf7eaec6a2048211fefc/patchy-2.2.10.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/com.mojang/text2speech/1.18.11/e853a12cdd6ba4f4836e8f4bf3b37844a13482b6/text2speech-1.18.11.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/commons-codec/commons-codec/1.19.0/8c0dbe3ae883fceda9b50a6c76e745e548073388/commons-codec-1.19.0.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/commons-io/commons-io/2.20.0/36f3474daec2849c149e877614e7f979b2082cd2/commons-io-2.20.0.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/io.netty/netty-buffer/4.2.7.Final/5555ff561643bf2f8430fb57c24403c0efe15994/netty-buffer-4.2.7.Final.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec-base/4.2.7.Final/915e381ebabcf115f1c7ff7032d55c48afb50210/netty-codec-base-4.2.7.Final.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec-compression/4.2.7.Final/572341bc1ca90fd9d6e47f1d2694aab5258566e9/netty-codec-compression-4.2.7.Final.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec-http/4.2.7.Final/b734c108854099c421fd94d92d9f865e4d4da853/netty-codec-http-4.2.7.Final.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/io.netty/netty-common/4.2.7.Final/11aa30df26af4fca3239ac1917f303a280f301e1/netty-common-4.2.7.Final.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/io.netty/netty-handler/4.2.7.Final/7ad8a1f851e2e6fe93cdd091871fda2b81c03b5b/netty-handler-4.2.7.Final.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/io.netty/netty-resolver/4.2.7.Final/5f3e5ef8de03992cd4fb46960dc0085ec1a12a12/netty-resolver-4.2.7.Final.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport-classes-epoll/4.2.7.Final/1075c09f48a78eef9d819fbfd9096b903fdd362a/netty-transport-classes-epoll-4.2.7.Final.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport-classes-kqueue/4.2.7.Final/bdec7c23c75caabd848426d073c09568e8d5f94e/netty-transport-classes-kqueue-4.2.7.Final.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport-native-kqueue/4.2.7.Final/e5a0feef41410c8a5ae00c6cb4e0c99bd0aded6a/netty-transport-native-kqueue-4.2.7.Final-osx-aarch_64.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport-native-kqueue/4.2.7.Final/40868fd4e43bce2798245f790624b58803dc26b6/netty-transport-native-kqueue-4.2.7.Final-osx-x86_64.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport-native-unix-common/4.2.7.Final/89953f04259ea7502cffb313630dd51e00e60669/netty-transport-native-unix-common-4.2.7.Final.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport/4.2.7.Final/83ea548981d0d8c4a98027cc1a6f9624f902e142/netty-transport-4.2.7.Final.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/it.unimi.dsi/fastutil/8.5.18/a6cff377eecc19c2037bf31568a6d7106b50ba1f/fastutil-8.5.18.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/net.java.dev.jna/jna-platform/5.17.0/a4934c44d25a9d8c2ddf4203affd20330cb3426f/jna-platform-5.17.0.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/net.java.dev.jna/jna/5.17.0/33d12735bef894440780fce64f9758d420c7bae2/jna-5.17.0.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/net.sf.jopt-simple/jopt-simple/5.0.4/4fdac2fbe92dfad86aa6e9301736f6b4342a3f5c/jopt-simple-5.0.4.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.apache.commons/commons-compress/1.28.0/e482f2c7a88dac3c497e96aa420b6a769f59c8d7/commons-compress-1.28.0.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.apache.commons/commons-lang3/3.19.0/d6524b169a6574cd253760c472d419b47bfd37e6/commons-lang3-3.19.0.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.jcraft/jorbis/0.0.17/8872d22b293e8f5d7d56ff92be966e6dc28ebdc6/jorbis-0.0.17.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.joml/joml/1.10.8/fc0a71dad90a2cf41d82a76156a0e700af8e4f8d/joml-1.10.8.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.jspecify/jspecify/1.0.0/7425a601c1c7ec76645a78d22b8c6a627edee507/jspecify-1.0.0.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-freetype/3.3.3/a0db6c84a8becc8ca05f9dbfa985edc348a824c7/lwjgl-freetype-3.3.3.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-freetype/3.3.3/b0a8c9baa9d1f54ac61e1ab9640c7659e7fa700c/lwjgl-freetype-3.3.3-natives-macos-arm64.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-freetype/3.3.3/806d869f37ce0df388a24e17aaaf5ca0894d851b/lwjgl-freetype-3.3.3-natives-macos-patch.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-glfw/3.3.3/efa1eb78c5ccd840e9f329717109b5e892d72f8e/lwjgl-glfw-3.3.3.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-glfw/3.3.3/a1bf400f6bc64e6195596cb1430dafda46090751/lwjgl-glfw-3.3.3-natives-macos.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-glfw/3.3.3/ee8cc78d0a4a5b3b4600fade6d927c9fc320c858/lwjgl-glfw-3.3.3-natives-macos-arm64.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-jemalloc/3.3.3/b543467b7ff3c6920539a88ee602d34098628be5/lwjgl-jemalloc-3.3.3.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-jemalloc/3.3.3/2906637657a57579847238c9c72d2c4bde7083f8/lwjgl-jemalloc-3.3.3-natives-macos.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-jemalloc/3.3.3/e9412c3ff8cb3a3bad1d3f52909ad74d8a5bdad1/lwjgl-jemalloc-3.3.3-natives-macos-arm64.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-openal/3.3.3/daada81ceb5fc0c291fbfdd4433cb8d9423577f2/lwjgl-openal-3.3.3.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-openal/3.3.3/8df8338bfa77f2ebabef4e58964bd04d24805cbf/lwjgl-openal-3.3.3-natives-macos.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-openal/3.3.3/c78b078de2fb52f45aa55d04db889a560f3544f/lwjgl-openal-3.3.3-natives-macos-arm64.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-opengl/3.3.3/2f6b0147078396a58979125a4c947664e98293a/lwjgl-opengl-3.3.3.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-opengl/3.3.3/1bd45997551ae8a28469f3a2b678f4b7289e12c0/lwjgl-opengl-3.3.3-natives-macos.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-opengl/3.3.3/d213ddef27637b1af87961ffa94d6b27036becc8/lwjgl-opengl-3.3.3-natives-macos-arm64.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-stb/3.3.3/25dd6161988d7e65f71d5065c99902402ee32746/lwjgl-stb-3.3.3.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-stb/3.3.3/472792c98fb2c1557c060cb9da5fca6a9773621f/lwjgl-stb-3.3.3-natives-macos.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-stb/3.3.3/51c6955571fbcdb7bb538c6aa589b953b584c6af/lwjgl-stb-3.3.3-natives-macos-arm64.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-tinyfd/3.3.3/82d755ca94b102e9ca77283b9e2dc46d1b15fbe5/lwjgl-tinyfd-3.3.3.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-tinyfd/3.3.3/6598081e346a03038a8be68eb2de614a1c2eac68/lwjgl-tinyfd-3.3.3-natives-macos.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-tinyfd/3.3.3/406feedb977372085a61eb0fee358183f4f4c67a/lwjgl-tinyfd-3.3.3-natives-macos-arm64.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl/3.3.3/29589b5f87ed335a6c7e7ee6a5775f81f97ecb84/lwjgl-3.3.3.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl/3.3.3/33a6efa288390490ce6eb6c3df47ac21ecf648cf/lwjgl-3.3.3-natives-macos.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl/3.3.3/226246e75f6bd8d4e1895bdce8638ef87808d114/lwjgl-3.3.3-natives-macos-arm64.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport-native-epoll/4.2.7.Final/e83998bfc10b5289d9bcbe807c4079ef0eed8e6f/netty-transport-native-epoll-4.2.7.Final-linux-x86_64.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Knot) Adding /Users/jacob/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport-native-epoll/4.2.7.Final/98d02251c98c8f07a23ac5ea27657d9e0ef57614/netty-transport-native-epoll-4.2.7.Final-linux-aarch_64.jar to classpath.
+[13:03:02] [main/DEBUG] (FabricLoader/Entrypoint) No subscribers for entrypoint 'preLaunch'
+[13:03:02] [main/DEBUG] (FabricLoader/Mixin) Preparing mixins for MixinEnvironment[DEFAULT]
+[13:03:02] [main/DEBUG] (FabricLoader/Mixin) Selecting config mixinextras.init.mixins.json
+[13:03:02] [main/DEBUG] (FabricLoader/MixinExtras|Service) com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.0) is taking over from null
+[13:03:02] [main/DEBUG] (FabricLoader/Mixin) Registering new injector for @Inject with org.spongepowered.asm.mixin.injection.struct.CallbackInjectionInfo
+[13:03:02] [main/DEBUG] (FabricLoader/Mixin) Registering new injector for @ModifyArg with org.spongepowered.asm.mixin.injection.struct.ModifyArgInjectionInfo
+[13:03:02] [main/DEBUG] (FabricLoader/Mixin) Registering new injector for @ModifyArgs with org.spongepowered.asm.mixin.injection.struct.ModifyArgsInjectionInfo
+[13:03:02] [main/DEBUG] (FabricLoader/Mixin) Registering new injector for @Redirect with org.spongepowered.asm.mixin.injection.struct.RedirectInjectionInfo
+[13:03:02] [main/DEBUG] (FabricLoader/Mixin) Registering new injector for @ModifyVariable with org.spongepowered.asm.mixin.injection.struct.ModifyVariableInjectionInfo
+[13:03:02] [main/DEBUG] (FabricLoader/Mixin) Registering new injector for @ModifyConstant with org.spongepowered.asm.mixin.injection.struct.ModifyConstantInjectionInfo
+[13:03:02] [main/DEBUG] (FabricLoader/Mixin) Selecting config auto-tree-feller.mixins.json
+[13:03:02] [main/DEBUG] (FabricLoader/Mixin) Preparing mixinextras.init.mixins.json (0)
+[13:03:02] [main/DEBUG] (FabricLoader/Mixin) Preparing auto-tree-feller.mixins.json (1)
+[13:03:02] [main/DEBUG] (io.netty.util.internal.logging.InternalLoggerFactory) Using SLF4J as the default logging framework
+[13:03:02] [main/DEBUG] (io.netty.util.ResourceLeakDetector) -Dio.netty.leakDetection.level: simple
+[13:03:02] [main/DEBUG] (io.netty.util.ResourceLeakDetector) -Dio.netty.leakDetection.targetRecords: 4
+[13:03:03] [Datafixer Bootstrap/INFO] (com.mojang.datafixers.DataFixerBuilder) 287 Datafixer optimizations took 505 milliseconds
+[13:03:09] [Render thread/INFO] (FabricLoader/MixinExtras|Service) Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.0).
+[13:03:09] [Render thread/DEBUG] (FabricLoader/Mixin) Registering new injector for @SugarWrapper with com.llamalad7.mixinextras.sugar.impl.SugarWrapperInjectionInfo
+[13:03:09] [Render thread/DEBUG] (FabricLoader/Mixin) Registering new injector for @FactoryRedirectWrapper with com.llamalad7.mixinextras.wrapper.factory.FactoryRedirectWrapperInjectionInfo
+[13:03:09] [Render thread/DEBUG] (FabricLoader/Mixin) Registering new injector for @ExpressionInjectorWrapper with com.llamalad7.mixinextras.expression.impl.wrapper.ExpressionInjectorWrapperInjectionInfo
+[13:03:09] [Render thread/DEBUG] (FabricLoader/Mixin) Mixing KeyInputMixin from auto-tree-feller.mixins.json into net.minecraft.client.MinecraftClient
+[13:03:09] [Render thread/DEBUG] (FabricLoader/Mixin) auto-tree-feller.mixins.json:KeyInputMixin from mod auto-tree-feller->@Inject::onTick(Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V doesn't use it's CallbackInfo
+[13:03:09] [Render thread/DEBUG] (FabricLoader/Mixin) auto-tree-feller.mixins.json:KeyInputMixin from mod auto-tree-feller->@Inject::onTick(Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V has 0 override(s) in child classes
+[13:03:09] [Render thread/DEBUG] (FabricLoader/Mixin) auto-tree-feller.mixins.json:KeyInputMixin from mod auto-tree-feller->@Inject::onTick(Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V won't be passed a CallbackInfo as a result
+[13:03:10] [Render thread/INFO] (com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService) Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, profilesHost=https://api.mojang.com, name=PROD]
+[13:03:10] [Yggdrasil Key Fetcher/DEBUG] (com.mojang.authlib.minecraft.client.MinecraftClient) Connecting to https://api.minecraftservices.com/publickeys
+[13:03:10] [Download-1/DEBUG] (com.mojang.authlib.minecraft.client.MinecraftClient) Connecting to https://sessionserver.mojang.com/session/minecraft/profile/fdd35a2906a9343eabe11b90a6820307?unsigned=false
+[13:03:10] [Render thread/INFO] (net.minecraft.client.MinecraftClient) Setting user: Player675
+[13:03:10] [Download-2/DEBUG] (com.mojang.authlib.minecraft.client.MinecraftClient) Connecting to https://api.minecraftservices.com/player/attributes
+[13:03:10] [Render thread/DEBUG] (FabricLoader/Entrypoint) No subscribers for entrypoint 'main'
+[13:03:10] [Render thread/DEBUG] (FabricLoader/Entrypoint) Iterating over entrypoint 'client'
+[13:03:10] [Render thread/INFO] (auto-tree-feller) Auto Tree Feller starting...
+[13:03:10] [Render thread/INFO] (auto-tree-feller) Auto Tree Feller initialized
+[13:03:11] [Render thread/INFO] (net.minecraft.client.MinecraftClient) Backend library: LWJGL version 3.3.3-snapshot
+[13:03:11] [Download-2/ERROR] (net.minecraft.client.MinecraftClient) Failed to fetch user properties
+com.mojang.authlib.exceptions.InvalidCredentialsException: Status: 401
+	at knot//com.mojang.authlib.exceptions.MinecraftClientHttpException.toAuthenticationException(MinecraftClientHttpException.java:59)
+	at knot//com.mojang.authlib.yggdrasil.YggdrasilUserApiService.fetchProperties(YggdrasilUserApiService.java:150)
+	at knot//net.minecraft.client.MinecraftClient.method_55608(MinecraftClient.java:457)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: com.mojang.authlib.exceptions.MinecraftClientHttpException: Status: 401
+	at knot//com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:103)
+	at knot//com.mojang.authlib.minecraft.client.MinecraftClient.get(MinecraftClient.java:56)
+	at knot//com.mojang.authlib.yggdrasil.YggdrasilUserApiService.fetchProperties(YggdrasilUserApiService.java:121)
+	... 5 more
+[13:03:11] [Download-1/DEBUG] (com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService) Couldn't fetch profile properties for fdd35a29-06a9-343e-abe1-1b90a6820307 as the profile does not exist
+[13:03:15] [Render thread/INFO] (net.minecraft.client.MinecraftClient) Using optional rendering extensions: GL_EXT_texture_filter_anisotropic
+[13:03:16] [Download-1/INFO] (net.minecraft.client.realms.RealmsClient) Could not authorize you against Realms server: java.lang.RuntimeException: Failed to parse into SignedJWT: FabricMC
+[13:03:16] [Download-1/ERROR] (net.minecraft.client.realms.RealmsClient) Failed to fetch Realms feature flags
+net.minecraft.client.realms.exception.RealmsServiceException: Realms authentication error with message 'java.lang.RuntimeException: Failed to parse into SignedJWT: FabricMC'
+	at knot//net.minecraft.client.realms.RealmsClient.execute(RealmsClient.java:526)
+	at knot//net.minecraft.client.realms.RealmsClient.fetchFeatureFlags(RealmsClient.java:186)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+[13:03:18] [Render thread/INFO] (net.minecraft.resource.ReloadableResourceManagerImpl) Reloading ResourceManager: vanilla
+[13:03:18] [Render thread/DEBUG] (com.mojang.blaze3d.systems.RenderSystem) Growing IndexBuffer: Old limit 0, new limit 60.
+[13:03:18] [Worker-Main-5/INFO] (net.minecraft.client.font.UnihexFont) Found unifont_all_no_pua-17.0.01.hex, loading
+[13:03:18] [Worker-Main-7/INFO] (net.minecraft.client.font.UnihexFont) Found unifont_pua-17.0.01.hex, loading
+[13:03:19] [Worker-Main-5/INFO] (net.minecraft.client.font.UnihexFont) Found unifont_jp_patch-17.0.01.hex, loading
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/entity and FS minecraft:core/entity. Log output: WARNING: Output of vertex shader 'overlayColor' not read by fragment shader
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/rendertype_text_see_through and FS minecraft:core/rendertype_text_see_through. Log output: WARNING: Could not find vertex shader attribute 'UV2' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/rendertype_translucent_moving_block and FS minecraft:core/rendertype_translucent_moving_block. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/animate_sprite and FS minecraft:core/animate_sprite_blit. Log output: WARNING: Output of vertex shader 'fAnimationProgress' not read by fragment shader
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/rendertype_crumbling and FS minecraft:core/rendertype_crumbling. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+WARNING: Output of vertex shader 'texCoord2' not read by fragment shader
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/rendertype_text_intensity_see_through and FS minecraft:core/rendertype_text_intensity_see_through. Log output: WARNING: Could not find vertex shader attribute 'UV2' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/entity and FS minecraft:core/entity. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+WARNING: Could not find vertex shader attribute 'UV2' to match BindAttributeLocation request.
+WARNING: Output of vertex shader 'overlayColor' not read by fragment shader
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/rendertype_beacon_beam and FS minecraft:core/rendertype_beacon_beam. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+WARNING: Could not find vertex shader attribute 'UV2' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/entity and FS minecraft:core/entity. Log output: WARNING: Could not find vertex shader attribute 'UV2' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/terrain and FS minecraft:core/terrain. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/terrain and FS minecraft:core/terrain. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/entity and FS minecraft:core/entity. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+WARNING: Could not find vertex shader attribute 'UV2' to match BindAttributeLocation request.
+WARNING: Output of vertex shader 'overlayColor' not read by fragment shader
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/terrain and FS minecraft:core/terrain. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/entity and FS minecraft:core/entity. Log output: WARNING: Output of vertex shader 'overlayColor' not read by fragment shader
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/terrain and FS minecraft:core/terrain. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/rendertype_entity_shadow and FS minecraft:core/rendertype_entity_shadow. Log output: WARNING: Could not find vertex shader attribute 'UV1' to match BindAttributeLocation request.
+WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+WARNING: Could not find vertex shader attribute 'UV2' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/block and FS minecraft:core/block. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/block and FS minecraft:core/block. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/entity and FS minecraft:core/entity. Log output: WARNING: Output of vertex shader 'overlayColor' not read by fragment shader
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/terrain and FS minecraft:core/terrain. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/block and FS minecraft:core/block. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/rendertype_item_entity_translucent_cull and FS minecraft:core/rendertype_item_entity_translucent_cull. Log output: WARNING: Output of vertex shader 'texCoord1' not read by fragment shader
+WARNING: Output of vertex shader 'texCoord2' not read by fragment shader
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/rendertype_beacon_beam and FS minecraft:core/rendertype_beacon_beam. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+WARNING: Could not find vertex shader attribute 'UV2' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/rendertype_text_background_see_through and FS minecraft:core/rendertype_text_background_see_through. Log output: WARNING: Could not find vertex shader attribute 'UV2' to match BindAttributeLocation request.
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/rendertype_entity_alpha and FS minecraft:core/rendertype_entity_alpha. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+WARNING: Output of vertex shader 'texCoord1' not read by fragment shader
+WARNING: Output of vertex shader 'texCoord2' not read by fragment shader
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/entity and FS minecraft:core/entity. Log output: WARNING: Output of vertex shader 'overlayColor' not read by fragment shader
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.gl.ShaderProgram) Info log when linking program containing VS minecraft:core/entity and FS minecraft:core/entity. Log output: WARNING: Could not find vertex shader attribute 'Normal' to match BindAttributeLocation request.
+WARNING: Output of vertex shader 'overlayColor' not read by fragment shader
+
+[13:03:22] [Render thread/INFO] (net.minecraft.client.sound.SoundEngine) OpenAL initialized on device MacBook Pro Speakers
+[13:03:22] [Render thread/INFO] (net.minecraft.client.sound.SoundSystem) Sound engine started
+[13:03:22] [Render thread/INFO] (net.minecraft.client.texture.SpriteAtlasTexture) Created: 512x256x0 minecraft:textures/atlas/particles.png-atlas
+[13:03:22] [Render thread/INFO] (net.minecraft.client.texture.SpriteAtlasTexture) Created: 128x128x0 minecraft:textures/atlas/decorated_pot.png-atlas
+[13:03:22] [Render thread/INFO] (net.minecraft.client.texture.SpriteAtlasTexture) Created: 2048x1024x0 minecraft:textures/atlas/armor_trims.png-atlas
+[13:03:22] [Render thread/INFO] (net.minecraft.client.texture.SpriteAtlasTexture) Created: 512x256x0 minecraft:textures/atlas/paintings.png-atlas
+[13:03:22] [Render thread/INFO] (net.minecraft.client.texture.SpriteAtlasTexture) Created: 1024x512x0 minecraft:textures/atlas/shield_patterns.png-atlas
+[13:03:22] [Render thread/INFO] (net.minecraft.client.texture.SpriteAtlasTexture) Created: 2048x2048x4 minecraft:textures/atlas/blocks.png-atlas
+[13:03:23] [Render thread/INFO] (net.minecraft.client.texture.SpriteAtlasTexture) Created: 512x512x0 minecraft:textures/atlas/chest.png-atlas
+[13:03:23] [Render thread/INFO] (net.minecraft.client.texture.SpriteAtlasTexture) Created: 256x128x0 minecraft:textures/atlas/celestials.png-atlas
+[13:03:23] [Render thread/INFO] (net.minecraft.client.texture.SpriteAtlasTexture) Created: 1024x512x0 minecraft:textures/atlas/banner_patterns.png-atlas
+[13:03:23] [Render thread/INFO] (net.minecraft.client.texture.SpriteAtlasTexture) Created: 512x512x0 minecraft:textures/atlas/beds.png-atlas
+[13:03:23] [Render thread/INFO] (net.minecraft.client.texture.SpriteAtlasTexture) Created: 1024x512x0 minecraft:textures/atlas/items.png-atlas
+[13:03:23] [Render thread/INFO] (net.minecraft.client.texture.SpriteAtlasTexture) Created: 1024x1024x0 minecraft:textures/atlas/gui.png-atlas
+[13:03:23] [Render thread/INFO] (net.minecraft.client.texture.SpriteAtlasTexture) Created: 128x64x0 minecraft:textures/atlas/map_decorations.png-atlas
+[13:03:23] [Render thread/INFO] (net.minecraft.client.texture.SpriteAtlasTexture) Created: 512x256x0 minecraft:textures/atlas/signs.png-atlas
+[13:03:23] [Render thread/INFO] (net.minecraft.client.texture.SpriteAtlasTexture) Created: 512x512x0 minecraft:textures/atlas/shulker_boxes.png-atlas
+[13:03:27] [Render thread/DEBUG] (com.mojang.blaze3d.systems.RenderSystem) Growing IndexBuffer: Old limit 60, new limit 1968.
+[13:03:49] [IO-Worker-1/INFO] (net.minecraft.client.realms.RealmsClient) Could not authorize you against Realms server: java.lang.RuntimeException: Failed to parse into SignedJWT: FabricMC
+[13:03:49] [IO-Worker-1/ERROR] (net.minecraft.client.realms.RealmsAvailability) Couldn't connect to realms
+net.minecraft.client.realms.exception.RealmsServiceException: Realms authentication error with message 'java.lang.RuntimeException: Failed to parse into SignedJWT: FabricMC'
+	at knot//net.minecraft.client.realms.RealmsClient.execute(RealmsClient.java:526)
+	at knot//net.minecraft.client.realms.RealmsClient.clientCompatible(RealmsClient.java:307)
+	at knot//net.minecraft.client.realms.RealmsAvailability.method_52627(RealmsAvailability.java:48)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+[13:03:51] [Render thread/DEBUG] (com.mojang.blaze3d.systems.RenderSystem) Growing IndexBuffer: Old limit 1968, new limit 4704.
+[13:03:58] [Render thread/INFO] (net.minecraft.client.MinecraftClient) Stopping!

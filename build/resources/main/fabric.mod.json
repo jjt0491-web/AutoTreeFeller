@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "auto-tree-feller",
+  "version": "1.0.0",
+  "name": "Auto Tree Feller",
+  "description": "Automatically harvest fig trees in SkyBlock",
+  "authors": ["Rowan"],
+  "environment": "client",
+  "entrypoints": {
+    "client": ["com.sylvanforager.autotreeleller.AutoTreeFeller"]
+  },
+  "depends": {
+    "fabricloader": ">=0.18.2",
+    "minecraft": "1.21.11"
+  },
+  "mixins": ["auto-tree-feller.mixins.json"]
+}
